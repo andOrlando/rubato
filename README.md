@@ -40,3 +40,36 @@ will probably be made more configurable.
 I'm also planning on writing a "target" function because that is what I
 originally intended this to be for. It'll be solving for time instead of the
 maximum slope, so that'll be a fun xournalpp mess.
+
+To create your own easing functions, you must have a table with two items:
+
+1. `F`, which is the antiderivative of the easing function from 0 to 1. For
+   f(x)=x, `F` would be 1/2. for f(x)=x^2, `F` would be 1/3.
+2. `easing`, which is a function with a single parameter, `t` or `x` or
+   whatever, which is the graph of the easing function. For f(x)=x, it'd be
+   `easing = function(t) return t end`
+
+An example usage is like this:
+```lua
+interpolator = require "interpolator"
+
+my_timed = interpolator.timed {
+	intro = 0.1,
+	duration = 0.3,
+	easing = interpolator.quadratic,
+	pos = 4
+}
+
+my_timed:subscribe(function(pos)
+	print(pos)
+end)
+
+my_timed:set(8)
+```
+
+and this will get you some kinda output which goes from 4 to 8 in 0.3 seconds
+but I can't be bothered to actually run this code (I'm kidding, I just don't
+know how to use gears in the normal lua interface, which is required for the
+timer).
+
+

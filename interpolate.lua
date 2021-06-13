@@ -289,53 +289,7 @@ local function target(obj)
 	return obj
 end
 
-local function interpolate(args)
-	--rate is executions/sec
-	--slope is units/execution (units/sec/r)
-	--pos is the initial position
-	--subscribed is the list of functions to execute
-	--target is the target, should be set with set
-	local self = args or {}
-	self.subscribed = self.subscribed or {}
-	self.target = 0
-	self.pos = self.pos or 0
-	self.rate = self.rate or 32
-	self.slope = self.slope or 1/32
-	
-	--sets up timer with timeout and non-timeout stuff
-	self.timer = gears.timer { timeout = 1 / self.rate }
-	self.timer:connect_signal("timeout", function()
-
-		self.pos = self.pos > self.target and self.pos - self.slope or self.pos + self.slope 
-		for _, func in ipairs(self.subscribed) do
-			func(self.pos) end
-
-
-		if (self.slope / 2) >= math.abs(self.target - self.pos) then
-
-			self.timer:stop()
-
-			self.pos = self.target
-			for _, func in ipairs(self.subscribed) do
-				func(self.pos) end
-		end
-	end)
-	
-	--set the target and begin interpolation
-	function self:set(target)
-
-		self.target = target
-
-		--starts it if it's not going
-		if not self.timer.started then
-			self.timer:start() end
-	end
-
-	return self
-end
-
 return {
-	interpolate = interpolate,
 	set_def_rate = set_def_rate,
 	timed = timed,
 	target = target,
