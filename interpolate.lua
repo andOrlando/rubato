@@ -66,10 +66,10 @@ local function get_dx(time, duration, intro, intro_e, outro, outro_e, inter, int
 end
 
 --weak table for memoizing results
-local simulate_turn_mem = {}
-setmetatable(simulate_turn_mem, {__mode="kv"})
+local simulate_easing_mem = {}
+setmetatable(simulate_easing_mem, {__mode="kv"})
 
---- Simulates the turn around to get the result to find a coefficient
+--- Simulates the easing to get the result to find a coefficient
 -- @param pos initial position
 -- @param duration duration
 -- @param intro intro duration
@@ -82,7 +82,7 @@ setmetatable(simulate_turn_mem, {__mode="kv"})
 -- @param b y-intercept
 -- @param dt change in time
 -- @see timed
-local function simulate_turn(pos, duration, intro, intro_e, outro, outro_e, inter, inter_e, m, b, dt)
+local function simulate_easing(pos, duration, intro, intro_e, outro, outro_e, inter, inter_e, m, b, dt)
 	local ps_time = 0
 	local ps_pos = pos 
 	local dx
@@ -94,8 +94,8 @@ local function simulate_turn(pos, duration, intro, intro_e, outro, outro_e, inte
 			inter, inter_e,
 			m, b)
 	
-	if simulate_turn_mem[key] then
-		return simulate_turn_mem[key]
+	if simulate_easing_mem[key] then
+		return simulate_easing_mem[key]
 	end
 
 	while duration - ps_time >= dt / 2 do
@@ -113,7 +113,7 @@ local function simulate_turn(pos, duration, intro, intro_e, outro, outro_e, inte
 		ps_pos = ps_pos + dx * dt
 	end
 
-	simulate_turn_mem[key] = ps_pos
+	simulate_easing_mem[key] = ps_pos
 	return ps_pos
 end
 
@@ -147,6 +147,8 @@ local function timed(obj)
 	obj.easing = obj.easing or linear
 	obj.easing_outro = obj.easing_outro or obj.easing
 	obj.easing_inter = obj.easing_inter or obj.easing
+
+	obj.override_simulate = obj.override_simulate or true
 	
 	--subscription stuff
 	local subscribed = {}
@@ -207,41 +209,27 @@ local function timed(obj)
 		target = target_new	--sets target 
 		time = 0			--resets time
 		coef = 1			--resets coefficient
-		
-		if not timer.started then 
 
-			b = 0 --no b initially (y-intercept is 0)
-			m = get_slope(obj.intro, obj.outro, obj.duration, 
-				target - obj.pos, obj.easing.F, obj.easing_outro.F, b)
+		b = timer.started and dx or 0
+		m = get_slope(obj.intro, obj.outro, obj.duration, 
+			target - obj.pos, obj.easing.F, obj.easing_outro.F, b)
 
-			timer:start() 
+		inter = timer.started
 
-		else
+		if not override_simulate or b / math.abs(b) ~= m / math.abs(m) then
+			ps_pos = simulate_easing(obj.pos, obj.duration,
+				obj.intro, obj.easing.easing,
+				obj.outro, obj.easing_outro.easing,
+				inter, obj.easing_inter.easing,
+				m, b, dt)
 
-			inter = true --it is now in an intermittent state
-			b = dx		 --carries over dx in the form of b
-			m = get_slope(obj.intro, obj.outro, obj.duration, 
-				target - obj.pos, obj.easing_inter.F, obj.easing_outro.F, b)
-
-			--simulate the entire sequence if necessary (to prevent overshooting)
-			--overshooting only happens when the signs of m and b are different
-			if b / math.abs(b) ~= m / math.abs(m) then
-				
-				--get the projected result
-				ps_pos = simulate_turn(obj.pos, obj.duration,
-					obj.intro, obj.easing.easing,
-					obj.outro, obj.easing_outro.easing,
-					inter, obj.easing_inter.easing,
-					m, b, dt)
-
-				--get coefficient by calculating ratio of theoretical range : experimental range
-				coef = (obj.pos - target) / (obj.pos - ps_pos)
-				if coef ~= coef then coef = 1 end --check for div by 0 resulting in nan
-
-			end
-
+			--get coefficient by calculating ratio of theoretical range : experimental range
+			coef = (obj.pos - target) / (obj.pos - ps_pos)
+			if coef ~= coef then coef = 1 end --check for div by 0 resulting in nan
 		end
 
+		if not timer.started then timer:start() end
+		
 	end
 	
 
