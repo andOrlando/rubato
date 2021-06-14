@@ -112,7 +112,7 @@ Arguments come in the form of a table.
  - `subscribed`: a function to subscribe at initialization
  - `override_simulate`: when `true`, will simulate everything instead of just
    when `dx` and `b` have opposite signs at the cost of having to do a little
-   more work (and making my hard work on finding the formula for m go to waste
+   more work (and making my hard work on finding the formula for `m` worthless 
    :slightly_frowning_face:)
 
 Methods are as follows:
@@ -267,9 +267,10 @@ Then, whenever you actually want to run the interpolator, do this at the start o
 
 
 <h1 id="todo">Todo</h1>
+
  - [ ] add `target` function, which rather than a set time has a set distance.
  - [ ] improve intro and outro arguments (asserts, default values, proportional intros/outros)
  - [ ] get a better name...
- - [X] make readme cooler
+ - [x] make readme cooler
  - [ ] have better documentation and add to luarocks
 
