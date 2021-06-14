@@ -101,19 +101,26 @@ Arguments come in the form of a table.
  - `duration`: the total duration of the animation
  - `rate`: the number of times per second the timer executes. Higher rates mean
    smoother animations and less error.
- - `pos`: the initial position of the animation
+ - `pos`: the initial position of the animation (def. `0`)
  - `intro`: the duration of the intro
- - `outro`: the duration of the outro (default is same as intro)
- - `easing`: the easing table
- - `easing_outro`: the outro easing table (default is same as easing)
+ - `outro`: the duration of the outro (def. same as `intro`*)
+ - `inter`: the duration of the between-animation time (def. same as `intro`)
+ - `prop_intro`: When `true`, `intro`, `outro` and `inter` represent proportional
+   values; 0.5 would be half the duration. (def. `false`)
+ - `easing`: the easing table (def. `interpolate.linear`)
+ - `easing_outro`: the outro easing table (def. same as `easing`)
  - `easing_inter`: the "intermittent" easing function, which defines which
-   easing to use in the case of animation interruptions (default is same as
-   easing)
- - `subscribed`: a function to subscribe at initialization
+   easing to use in the case of animation interruptions (def. same as
+   `easing`)
+ - `subscribed`: a function to subscribe at initialization (def. `nil`)
  - `override_simulate`: when `true`, will simulate everything instead of just
    when `dx` and `b` have opposite signs at the cost of having to do a little
    more work (and making my hard work on finding the formula for `m` worthless 
-   :slightly_frowning_face:)
+   :slightly_frowning_face:) (def. `false`)
+
+*with the caviat that if the outro being the same as the intro would result in
+an error, it would go for the largest allowable outro time. Ex: duration = 1,
+intro = 0.6, then outro will default to 0.4.
 
 Methods are as follows:
  - `set(target_new)`: sets the position the animation should go to
@@ -269,7 +276,7 @@ Then, whenever you actually want to run the interpolator, do this at the start o
 <h1 id="todo">Todo</h1>
 
  - [ ] add `target` function, which rather than a set time has a set distance.
- - [ ] improve intro and outro arguments (asserts, default values, proportional intros/outros)
+ - [x] improve intro and outro arguments (asserts, default values, proportional intros/outros)
  - [ ] get a better name...
  - [x] make readme cooler
  - [ ] have better documentation and add to luarocks

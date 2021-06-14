@@ -1,5 +1,4 @@
 local gears = require "gears"
-local naughty = require "naughty"
 
 --- Linear easing (in quotes).
 local linear = {
@@ -47,15 +46,12 @@ end
 -- @param intro_e intro easing function
 -- @param outro outro duration
 -- @param outro_e outro easing funciton
--- @param inter whether or not it's in an intermittent state
--- @param inter_e inter easing function
 -- @param m slope
 -- @param b y-intercept
 -- @see timed
-local function get_dx(time, duration, intro, intro_e, outro, outro_e, inter, inter_e, m, b)
+local function get_dx(time, duration, intro, intro_e, outro, outro_e, m, b)
 	if time <= intro then
-		easing = inter and inter_e or intro_e
-		return easing(time / intro) * (m - b) + b
+		return intro_e(time / intro) * (m - b) + b
 
 	--outro math
 	elseif (duration - time) <= outro then
@@ -82,17 +78,16 @@ setmetatable(simulate_easing_mem, {__mode="kv"})
 -- @param b y-intercept
 -- @param dt change in time
 -- @see timed
-local function simulate_easing(pos, duration, intro, intro_e, outro, outro_e, inter, inter_e, m, b, dt)
+local function simulate_easing(pos, duration, intro, intro_e, outro, outro_e, m, b, dt)
 	local ps_time = 0
 	local ps_pos = pos 
 	local dx
 
-	key = string.format("%f %f %f %s %f %s %s %s %f %f", 
-			pos, duration,
-			intro, intro_e,
-			outro, outro_e,
-			inter, inter_e,
-			m, b)
+	key = string.format("%f %f %f %s %f %s %s %s", 
+		pos, duration,
+		intro, intro_e,
+		outro, outro_e,
+		m, b)
 	
 	if simulate_easing_mem[key] then
 		return simulate_easing_mem[key]
@@ -106,7 +101,6 @@ local function simulate_easing(pos, duration, intro, intro_e, outro, outro_e, in
 		dx = get_dx(ps_time, duration,
 			intro, intro_e,
 			outro, outro_e,
-			inter, inter_e,
 			m, b)
 		
 		--increment pos by dx
@@ -123,10 +117,13 @@ end
 -- @field pos initial position of the animation (0)
 -- @field intro duration of intro (0.2)
 -- @field outro duration of outro (same as intro)
+-- @field inter duration of intermittent time (same as intro)
 -- @field easing easing method (linear)
 -- @field easing_outro easing method for outro (same as easing)
 -- @field easing_inter intermittent easing method (same as easing)
 -- @field subscribed an initial function to subscribe (nil)
+-- @field prop_intro whether or not the durations given from intro, outro
+-- and inter are proportional or just static times
 -- @return timed interpolator
 -- @method timed:subscribe(func) subscribe a function to the timer refresh
 -- @method timed:update_rate(rate_new) please use this function instead of
@@ -141,8 +138,20 @@ local function timed(obj)
 	obj.rate = obj.rate or def_rate
 	obj.pos = obj.pos or 0
 
+	obj.prop_intro = obj.prop_intro or false
+
 	obj.intro = obj.intro or 0.2
-	obj.outro = obj.outro or obj.intro
+	obj.inter = obj.inter or obj.intro
+
+	--set obj.outro nicely based off how large obj.intro is
+	if obj.intro > (obj.prop_intro and 0.5 or obj.duration) and not obj.outro then
+		obj.outro = math.max((obj.prop_intro and 1 or obj.duration - obj.intro), 0)
+
+	elseif not obj.outro then obj.outro = obj.intro end
+
+	--assert that these values are valid
+	assert(obj.intro + obj.outro <= obj.duration or obj.prop_intro, "Intro and Outro must be less than or equal to total duration")
+	assert(obj.intro + obj.outro <= 1 or not prop_intro, "Proportional Intro and Outro must be less than or equal to 1")
 
 	obj.easing = obj.easing or linear
 	obj.easing_outro = obj.easing_outro or obj.easing
@@ -156,18 +165,19 @@ local function timed(obj)
 	local s_counter = 1
 
 	--TODO: fix double pos thing
-	local time				--elapsed time in seconds
-	local target			--target value for pos
-	local dt = 1 / obj.rate --dt based off rate
-	local dx = 0			--variable slope
-	local m					--maximum slope  @see obj:set
-	local b					--y-intercept  @see obj:set
-	local easing			--placeholder easing function variable
-	local inter				--checks if it's in an intermittent state
+	local time		--elapsed time in seconds
+	local target		--target value for pos
+	local dt = 1 / obj.rate	--dt based off rate
+	local dx = 0		--variable slope
+	local m			--maximum slope  @see obj:set
+	local b			--y-intercept  @see obj:set
+	local easing		--placeholder easing function variable
+	local is_inter		--checks if it's in an intermittent state
 
-	local ps_pos			--pseudoposition
-	local coef				--dx coefficient if necessary
+	local ps_pos		--pseudoposition
+	local coef		--dx coefficient if necessary
 
+	
 
 	local timer = gears.timer { timeout = dt }
 	timer:connect_signal("timeout", function()
@@ -177,11 +187,12 @@ local function timed(obj)
 		
 		--get dx
 		dx = get_dx(time, obj.duration, 
-			obj.intro, obj.easing.easing, 
-			obj.outro, obj.easing_outro.easing, 
-			inter, obj.easing_inter.easing, 
+			(is_inter and obj.inter or obj.intro) * (obj.prop_intro and obj.duration or 1), 
+			is_inter and obj.easing_inter.easing and obj.easing.easing, 
+			obj.outro * (obj.prop_intro and obj.duration or 1), 
+			obj.easing_outro.easing, 
 			m, b)
-
+		
 		--increment pos by dx
 		--scale by dt and correct with coef if necessary
 		obj.pos = obj.pos + dx * dt * coef
@@ -191,7 +202,7 @@ local function timed(obj)
 		if obj.duration - time < dt / 2 then
 			obj.pos = target --snaps to target in case of small error
 
-			inter = false	 --resets intermittent
+			is_inter = false --resets intermittent
 			timer:stop()	 --stops itself
 		end
 
@@ -210,17 +221,24 @@ local function timed(obj)
 		time = 0			--resets time
 		coef = 1			--resets coefficient
 
-		b = timer.started and dx or 0
-		m = get_slope(obj.intro, obj.outro, obj.duration, 
-			target - obj.pos, obj.easing.F, obj.easing_outro.F, b)
+		is_inter = timer.started
 
-		inter = timer.started
+		b = timer.started and dx or 0
+		m = get_slope(is_inter and obj.easing_inter.F or obj.easing.F,
+		    (is_inter and obj.inter or obj.intro) * (obj.prop_intro and obj.duration or 1),
+		    obj.outro * (obj.prop_intro and obj.duration or 1),
+		    obj.duration, 
+		    target - obj.pos, 
+		    is_inter and obj.easing_inter.F or obj.easing.F, 
+		    obj.easing_outro.F, 
+		    b)
 
 		if not override_simulate or b / math.abs(b) ~= m / math.abs(m) then
 			ps_pos = simulate_easing(obj.pos, obj.duration,
-				obj.intro, obj.easing.easing,
-				obj.outro, obj.easing_outro.easing,
-				inter, obj.easing_inter.easing,
+				(is_inter and obj.inter or obj.intro) * (obj.prop_intro and obj.duration or 1), 
+				is_inter and obj.easing_inter.easing or obj.easing.easing,
+				obj.outro * (obj.prop_intro and obj.duration or 1), 
+				obj.easing_outro.easing,
 				m, b, dt)
 
 			--get coefficient by calculating ratio of theoretical range : experimental range
@@ -261,7 +279,7 @@ local function timed(obj)
 	function obj:is_started() return timer.started end
 	
 	function obj:abort()
-		inter = false
+		is_inter = false
 		timer:stop()
 	end
 
@@ -285,3 +303,4 @@ return {
 	zero = zero,
 	quadratic = quadratic,
 }
+
