@@ -280,4 +280,5 @@ Then, whenever you actually want to run the interpolator, do this at the start o
  - [ ] get a better name...
  - [x] make readme cooler
  - [ ] have better documentation and add to luarocks
+ - [ ] remove gears dependancy
 
