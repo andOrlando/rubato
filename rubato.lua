@@ -243,6 +243,9 @@ local function timed(obj)
 	-- Set target and begin interpolation
 	function obj:set(target_new)
 
+		--disallow setting it twice (because it makes it go wonky)
+		if target == target_new then return end
+
 		target = target_new	--sets target 
 		time = 0			--resets time
 		coef = 1			--resets coefficient
