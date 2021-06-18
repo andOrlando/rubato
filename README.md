@@ -173,10 +173,10 @@ can't use jupyter (or don't want to), `%display ascii_art` is a pretty cool
 alternative.
 
 The initial function, given by [easings.net](https://easings.net), is as follows:  
-<img src="https://render.githubusercontent.com/render/math?math=f(x)=-2^{10 \, x - 10} \sin\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right))">
+<img src="https://render.githubusercontent.com/render/math?math=f(x)=-2^{10 \, x - 10}\times \sin\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right))">
 
 The derivative (via sagemath) is as follows:  
-<img src="https://render.githubusercontent.com/render/math?math=f^\prime (x)=-\frac{5}{3} \, {\left(2 \, \pi \cos\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right) %2B 3 \, \log\left(2\right) \sin\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right)\right)} 2^{10 \, x - 9}">
+<img src="https://render.githubusercontent.com/render/math?math=f^\prime (x)=-\frac{5}{3} \, {\left(2 \, \pi \cos\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right) %2B 3 \, \log\left(2\right) \sin\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right)\right)}\times 2^{10 \, x - 9}">
 
 First we double check that `f'(0)=0`, which in this case it is not.  
 <img src="https://render.githubusercontent.com/render/math?math=f^\prime (0)=\frac{5}{1536} \, \sqrt{3} \pi - \frac{5}{1024} \, \log\left(2\right)">
@@ -184,14 +184,14 @@ First we double check that `f'(0)=0`, which in this case it is not.
 so now we subtract `f'(0)` from `f'(x)` and get a pretty messy function, let's
 say `f_2(x)`. Regrettably, we're about to mess up that function a little more.
 Next we check that `f_2(1)=1`. In this case, once again, it doesn't. We get  
-<img src="https://render.githubusercontent.com/render/math?math=f_2(1)=-\frac{5}{3072} \, \sqrt{3} {\left(2 \, \pi - 2049 \, \sqrt{3} \log\left(2\right)\right)}">
+<img src="https://render.githubusercontent.com/render/math?math=f_2(1)=-\frac{5}{3072} \, \sqrt{3} {\left(2 \, \pi - 2049 \, \sqrt{3}\times \log\left(2\right)\right)}">
 
 So now we divide our `f(x)` by `f(1)`, to get our final function, `f_e(x)` (easing function) (I am so great at naming these kinds of things)  
-<img src="https://render.githubusercontent.com/render/math?math=f_e(x)=\frac{6 \, \pi %2B \sqrt{3} \pi 2^{10 \, x %2B 2} \cos\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right) %2B 3 \, \sqrt{3} 2^{10 \, x %2B 1} \log\left(2\right) \sin\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right) - 3 \, \sqrt{3} \log\left(2\right)}{3 \, {\left(2 \, \pi - 2049 \, \sqrt{3} \log\left(2\right)\right)}}">
+<img src="https://render.githubusercontent.com/render/math?math=f_e(x)=\frac{6 \, \pi %2B \sqrt{3} \pi \times 2^{10 \, x %2B 2}\times \cos\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right) %2B 3 \, \sqrt{3}\times 2^{10 \, x %2B 1}\times \log\left(2\right) \sin\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right) - 3 \, \sqrt{3}\times \log\left(2\right)}{3 \, {\left(2 \, \pi - 2049 \, \sqrt{3} \times\log\left(2\right)\right)}}">
 
 Great... This is going to be a treat to write as lua... Anyways, our final step is to
 find the definite integral from 0 to 1 of our `f(x)`, which is this  
-<img src="https://render.githubusercontent.com/render/math?math=\int_0^1 f_e(x) \,dx=\frac{20 \, \pi - 10 \, \sqrt{3} \log\left(2\right) - 2049 \, \sqrt{3}}{10 \, {\left(2 \, \pi - 2049 \, \sqrt{3} \log\left(2\right)\right)}}">
+<img src="https://render.githubusercontent.com/render/math?math=\int_0^1 f_e(x) \,dx=\frac{20 \, \pi - 10 \, \sqrt{3}\times \log\left(2\right) - 2049 \, \sqrt{3}}{10 \, {\left(2 \, \pi - 2049 \, \sqrt{3}\times \log\left(2\right)\right)}}">
 
 Now I'm sure that looks pretty daunting. However, these functions are kinda
 stupidly easy to find with sagemath. You basically only have to run these
