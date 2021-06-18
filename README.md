@@ -1,9 +1,10 @@
-# interpolate
+# rubato
 
 - [But why though?](#b-w-t)
 - [Arguments and Methods](#a-and-m)
 - [Custom Easing Functions](#c-e-f)
 - [Installation](#install)
+- [Why the name?](#name)
 - [Todo](#todo)
 
 Basically like [awestore](https://github.com/K4rakara/awestore) but not really.
@@ -12,7 +13,7 @@ The general premise of this is that I don't understand how awestore works. That
 and I really wanted to be able to have an interpolator that didn't have a set
 time. That being said, I haven't made an interpolator that doesn't have a set
 time yet, so I just have this instead. It has a similar function to awestore but
-the method in which you actually go about doing the easing is very different. 
+the method in which you actually go about doing the easing is very different.
 
 In this case, you essentially construct a graph of the slope you want for
 easing. The reason for that is, if you are working with the derivative the whole
@@ -47,7 +48,7 @@ Okay so this is what it looks like in action
 
 ```lua
 --what I actually use for my workspaces
-timed = interpolate.timed {
+timed = rubato.timed {
 	intro = 0.1,
 	duration = 0.3
 }
@@ -59,10 +60,10 @@ This is very subtly eased, however. A much more pronounced easing would look
 more like this:
 
 ```lua
-timed = interpolate.timed {
+timed = rubato.timed {
 	intro = 0.5,
 	duration = 1,
-	easing = interpolate.quadratic --quadratic slope, not easing
+	easing = rubato.quadratic --quadratic slope, not easing
 }
 ```
 
@@ -78,13 +79,13 @@ lack of a plateau which gives the more pronounced easing:
 
 Why go through all this hastle? Why not just use awestore? That's a good
 question and to be fair you can use whatever interpolator you so choose.
-However, this interpolator does have one advantage, which is that interruptions
+However, rubato does have one advantage, which is that interruptions
 are as perfect as can be. It conserves the current position and slope of the
 previous animation when you start a new one, and even allows you to use a custom
 specific easing animation for interruptions. Basically the interruptions are
 mathematically as smooth as you can possibly make them. Kinda.
 
-Furthermore, if you use this interpolator, you get to brag about how annoying it
+Furthermore, if you use rubato, you get to brag about how annoying it
 was to set up a monstrous derivative just to write a custom easing function,
 like the one shown in [Custom Easing Function](#c-e-f)'s example. That's a
 benefit, not a downside, I promise.
@@ -93,9 +94,11 @@ Also maybe hopefully the code should be almost digestible kinda maybe. I tried
 my best to comment and documentate, but I actually have no idea how to do lua
 docs or luarocks or anything.
 
+Also it has a cooler name
+
 <h1 id="a-and-m">Arguments and Methods</h1>
 
-**For interpolate.timed**:
+**For rubato.timed**:
 
 Arguments come in the form of a table.
  - `duration`: the total duration of the animation
@@ -123,20 +126,21 @@ an error, it would go for the largest allowable outro time. Ex: duration = 1,
 intro = 0.6, then outro will default to 0.4.
 
 Methods are as follows:
- - `set(target_new)`: sets the position the animation should go to
- - `subscribe(func)`: subscribe a function to be ran every refresh of the
+ - `timed:set(target_new)`: sets the position the animation should go to
+ - `timed:subscribe(func)`: subscribe a function to be ran every refresh of the
    animation
- - `unsubscribe(func)`: unsubscribe a function
- - `abort()`: stop the animation
- - `is_started()`: returns `true` if the animation is started, `false` otherwise
- - `update_rate(rate_new)`: updates the rate along with an internal number. If
+ - `timed:unsubscribe(func)`: unsubscribe a function
+ - `timed:abort()`: stop the animation
+ - `timed:is_started()`: returns `true` if the animation is started, `false` otherwise
+ - `timed:update_rate(rate_new)`: updates the rate along with an internal number. If
    you want to update rate dynamically you should use this function
 
 
 **builtin easing functions**
- - `interpolate.zero`: linear easing, zero slope
- - `interpolate.linear`: linear slope, quadratic easing
- - `interpolate.quadratic`: quadratic slope, cubic easing
+ - `rubato.zero`: linear easing, zero slope
+ - `rubato.linear`: linear slope, quadratic easing
+ - `rubato.quadratic`: quadratic slope, cubic easing
+ - `rubato.bouncy`: the bouncy thing as shown in the example
 
 <h1 id="c-e-f">Custom Easing Functions</h1>
 
@@ -239,7 +243,7 @@ bouncy = {
 	end
 }
 
-timed = interpolate.timed {
+timed = rubato.timed {
 	intro = 0, --we'll use this as an outro, since it's weird as an intro
 	outro = 0.7,
 	duration = 1,
@@ -267,17 +271,24 @@ derivative and antiderivative of the derivative.
 So actually telling people how to install this is important, isn't it
 
 basically, just somewhere in your awesome directory, (I use `~/.config/awesome/lib`) run this command:  
-`wget https://raw.githubusercontent.com/andOrlando/interpolate/main/interpolate.lua`
+`wget https://raw.githubusercontent.com/andOrlando/interpolate/main/rubato.lua`
 
-Then, whenever you actually want to run the interpolator, do this at the start of the lua file  
-`local interpolate = require "lib.interpolate"`
+Then, whenever you actually want to use rubato, do this at the start of the lua file  
+`local rubato = require "lib.rubato"`
 
+<h1 id="name">Why the name?</h1>
+
+Beacuse I play piano so this kinda links up with other stuff I do, and rubato
+really well fits the project. In music, it means "push and pull of tempo"
+basically, which really is waht easing is all about in the first place. Plus,
+it'll be the first of my projects without garbage names ("minesweperSweeper,"
+"Latin Learning").
 
 <h1 id="todo">Todo</h1>
 
  - [ ] add `target` function, which rather than a set time has a set distance.
  - [x] improve intro and outro arguments (asserts, default values, proportional intros/outros)
- - [ ] get a better name...
+ - [x] get a better name... (I have a cool name now!)
  - [x] make readme cooler
  - [ ] have better documentation and add to luarocks
  - [ ] remove gears dependancy
