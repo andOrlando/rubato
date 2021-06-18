@@ -271,7 +271,7 @@ derivative and antiderivative of the derivative.
 So actually telling people how to install this is important, isn't it
 
 basically, just somewhere in your awesome directory, (I use `~/.config/awesome/lib`) run this command:  
-`wget https://raw.githubusercontent.com/andOrlando/interpolate/main/rubato.lua`
+`wget https://raw.githubusercontent.com/andOrlando/rubato/main/rubato.lua`
 
 Then, whenever you actually want to use rubato, do this at the start of the lua file  
 `local rubato = require "lib.rubato"`

@@ -324,6 +324,7 @@ end
 return {
 	set_def_rate = set_def_rate,
 	timed = timed,
+
 	target = target,
 	linear = linear,
 	zero = zero,
