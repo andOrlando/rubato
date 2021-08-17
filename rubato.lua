@@ -29,7 +29,7 @@ local b_cs = {
 
 --the bouncy one as seen in the readme
 local bouncy = {
-	F = (20 * math.pi - (10 * math.log(2) - 2049) * math.sqrt(3)) / 
+	F = (20 * math.pi - (10 * math.log(2) - 2049) * math.sqrt(3)) /
 		(20 * math.pi - 20490 * math.sqrt(3) * math.log(2)),
 	easing = function(t)
 		--short circuit
@@ -104,15 +104,15 @@ setmetatable(simulate_easing_mem, {__mode="kv"})
 -- @see timed
 local function simulate_easing(pos, duration, intro, intro_e, outro, outro_e, m, b, dt)
 	local ps_time = 0
-	local ps_pos = pos 
+	local ps_pos = pos
 	local dx
 
-	key = string.format("%f %f %f %s %f %s %s %s", 
+	key = string.format("%f %f %f %s %f %s %s %s",
 		pos, duration,
 		intro, intro_e,
 		outro, outro_e,
 		m, b)
-	
+
 	if simulate_easing_mem[key] then
 		return simulate_easing_mem[key]
 	end
@@ -126,7 +126,7 @@ local function simulate_easing(pos, duration, intro, intro_e, outro, outro_e, m,
 			intro, intro_e,
 			outro, outro_e,
 			m, b)
-		
+
 		--increment pos by dx
 		ps_pos = ps_pos + dx * dt
 	end
@@ -182,47 +182,49 @@ local function timed(obj)
 	obj.easing_inter = obj.easing_inter or obj.easing
 
 	obj.override_simulate = obj.override_simulate or true
-	
+
+	obj.log = obj.log or false
+
 	--subscription stuff
 	local subscribed = {}
 	local subscribed_i = {}
 	local s_counter = 1
 
 	--TODO: fix double pos thing
-	local time		--elapsed time in seconds
-	local target		--target value for pos
+	local time				--elapsed time in seconds
+	local target			--target value for pos
 	local dt = 1 / obj.rate	--dt based off rate
-	local dx = 0		--variable slope
-	local m			--maximum slope  @see obj:set
-	local b			--y-intercept  @see obj:set
-	local easing		--placeholder easing function variable
-	local is_inter		--checks if it's in an intermittent state
+	local dx = 0			--variable slope
+	local m					--maximum slope  @see obj:set
+	local b					--y-intercept  @see obj:set
+	local easing			--placeholder easing function variable
+	local is_inter			--checks if it's in an intermittent state
 
-	local ps_pos		--pseudoposition
-	local coef		--dx coefficient if necessary
+	local ps_pos			--pseudoposition
+	local coef				--dx coefficient if necessary
 
-	
+
 
 	local timer = gears.timer { timeout = dt }
 	timer:connect_signal("timeout", function()
 
 		--increment time
 		time = time + dt
-		
+
 		--get dx
-		dx = get_dx(time, obj.duration, 
-			(is_inter and obj.inter or obj.intro) * (obj.prop_intro and obj.duration or 1), 
-			is_inter and obj.easing_inter.easing or obj.easing.easing, 
-			obj.outro * (obj.prop_intro and obj.duration or 1), 
-			obj.easing_outro.easing, 
+		dx = get_dx(time, obj.duration,
+			(is_inter and obj.inter or obj.intro) * (obj.prop_intro and obj.duration or 1),
+			is_inter and obj.easing_inter.easing or obj.easing.easing,
+			obj.outro * (obj.prop_intro and obj.duration or 1),
+			obj.easing_outro.easing,
 			m, b)
 
-		
-		
+
+
 		--increment pos by dx
 		--scale by dt and correct with coef if necessary
 		obj.pos = obj.pos + dx * dt * coef
-		
+
 		--sets up when to stop by time
 		--weirdness is to try to get closest to duration
 		if obj.duration - time < dt / 2 then
@@ -233,7 +235,7 @@ local function timed(obj)
 		end
 
 		--run subscribed in functions
-		for _, func in ipairs(subscribed) do 
+		for _, func in ipairs(subscribed) do
 			func(obj.pos, time, dx) end
 
 	end)
@@ -246,7 +248,7 @@ local function timed(obj)
 		--disallow setting it twice (because it makes it go wonky)
 		if target == target_new then return end
 
-		target = target_new	--sets target 
+		target = target_new	--sets target
 		time = 0			--resets time
 		coef = 1			--resets coefficient
 
@@ -256,17 +258,17 @@ local function timed(obj)
 		m = get_slope(is_inter and obj.easing_inter.F or obj.easing.F,
 		    (is_inter and obj.inter or obj.intro) * (obj.prop_intro and obj.duration or 1),
 		    obj.outro * (obj.prop_intro and obj.duration or 1),
-		    obj.duration, 
-		    target - obj.pos, 
-		    is_inter and obj.easing_inter.F or obj.easing.F, 
-		    obj.easing_outro.F, 
+		    obj.duration,
+		    target - obj.pos,
+		    is_inter and obj.easing_inter.F or obj.easing.F,
+		    obj.easing_outro.F,
 		    b)
 
 		if not override_simulate or b / math.abs(b) ~= m / math.abs(m) then
 			ps_pos = simulate_easing(obj.pos, obj.duration,
-				(is_inter and obj.inter or obj.intro) * (obj.prop_intro and obj.duration or 1), 
+				(is_inter and obj.inter or obj.intro) * (obj.prop_intro and obj.duration or 1),
 				is_inter and obj.easing_inter.easing or obj.easing.easing,
-				obj.outro * (obj.prop_intro and obj.duration or 1), 
+				obj.outro * (obj.prop_intro and obj.duration or 1),
 				obj.easing_outro.easing,
 				m, b, dt)
 
@@ -276,15 +278,15 @@ local function timed(obj)
 		end
 
 		if not timer.started then timer:start() end
-		
+
 	end
-	
+
 
 	-- Methods for updating stuff
 
 	-- update dt along with rate
 	function obj:update_rate(rate_new)
-		obj.rate = rate_new 
+		obj.rate = rate_new
 		dt = 1 / obj.rate
 	end
 
@@ -306,19 +308,19 @@ local function timed(obj)
 	end
 
 	function obj:is_started() return timer.started end
-	
+
 	function obj:abort()
 		is_inter = false
 		timer:stop()
 	end
 
 	return obj
-	
+
 end
 
 --- TODO: Targegt function.
 local function target(obj)
-	
+
 
 
 	return obj
