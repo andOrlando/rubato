@@ -1,4 +1,5 @@
 local gears = require "gears"
+local naughty = require 'naughty'
 
 --- Linear easing (in quotes).
 local linear = {
@@ -135,6 +136,30 @@ local function simulate_easing(pos, duration, intro, intro_e, outro, outro_e, m,
 	return ps_pos
 end
 
+local function subscribable(obj)
+	local obj = obj or {}
+	local subscribed = {}
+	local subscribed_i = {}
+	local s_counter = 0
+
+	function obj:subscribe(func)
+		subscribed[s_counter] = func
+		subscribed_i[func] = s_counter
+		s_counter = s_counter + 1
+
+		if self.subscribe_callback then self.subscribe_callback(func) end
+	end
+
+	function obj:unsubscribe(func)
+		table.remove(subscribed, subscribed_i[func])
+		table.remove(subscribed_i, func)
+	end
+
+	function obj:fire(...) for _, func in pairs(subscribed) do func(...) end end
+
+	return obj
+end
+
 --- INTERPOLATE. bam. it still ends in a period. But this one is timed.
 -- @field duration the length of the animation (1)
 -- @field rate how many times per second the aniamtion refrehses (32)
@@ -153,43 +178,53 @@ end
 -- @method timed:update_rate(rate_new) please use this function instead of
 -- manually updating rate
 -- @method timed:set(target_new) set the target value for pos to end at
-local function timed(obj)
+local function timed(args)
+
+	local obj = subscribable()
 
 	--set up default arguments
-	local obj = obj or {}
+	obj.duration = args.duration or 1
+	obj.rate = args.rate or def_rate
+	obj.pos = args.pos or 0
 
-	obj.duration = obj.duration or 1
-	obj.rate = obj.rate or def_rate
-	obj.pos = obj.pos or 0
-	obj.init_pos = obj.pos
+	obj.prop_intro = args.prop_intro or false
 
-	obj.prop_intro = obj.prop_intro or false
+	obj.intro = args.intro or 0.2
+	obj.inter = args.inter or args.intro
 
-	obj.intro = obj.intro or 0.2
-	obj.inter = obj.inter or obj.intro
+	--set args.outro nicely based off how large args.intro is
+	if obj.intro > (obj.prop_intro and 0.5 or obj.duration) and not args.outro then
+		obj.outro = math.max((args.prop_intro and 1 or args.duration - args.intro), 0)
 
-	--set obj.outro nicely based off how large obj.intro is
-	if obj.intro > (obj.prop_intro and 0.5 or obj.duration) and not obj.outro then
-		obj.outro = math.max((obj.prop_intro and 1 or obj.duration - obj.intro), 0)
-
-	elseif not obj.outro then obj.outro = obj.intro end
+	elseif not args.outro then obj.outro = args.intro
+	else obj.outro = args.outro end
 
 	--assert that these values are valid
 	assert(obj.intro + obj.outro <= obj.duration or obj.prop_intro, "Intro and Outro must be less than or equal to total duration")
 	assert(obj.intro + obj.outro <= 1 or not prop_intro, "Proportional Intro and Outro must be less than or equal to 1")
 
-	obj.easing = obj.easing or linear
-	obj.easing_outro = obj.easing_outro or obj.easing
-	obj.easing_inter = obj.easing_inter or obj.easing
+	obj.easing = args.easing or linear
+	obj.easing_outro = args.easing_outro or obj.easing
+	obj.easing_inter = args.easing_inter or obj.easing
 
-	obj.override_simulate = obj.override_simulate or true
+	obj.override_simulate = args.override_simulate or true
 
-	obj.log = obj.log or false
+	obj.log = args.log or false
+	obj.awestore_compat = args.awestore_compat or false
 
-	--subscription stuff
-	local subscribed = {}
-	local subscribed_i = {}
-	local s_counter = 1
+
+	-- annoying awestore compatibility
+	if obj.awestore_compat then
+		obj.initial = obj.pos
+		obj.last = 0
+
+		function obj:initial() return obj.initial end
+		function obj:last() return obj.last end
+
+		obj.started = subscribable()
+		obj.ended = subscribable()
+
+	end
 
 	--TODO: fix double pos thing
 	local time = 0			--elapsed time in seconds
@@ -233,14 +268,14 @@ local function timed(obj)
 
 			is_inter = false --resets intermittent
 			timer:stop()	 --stops itself
+
+			-- awestore compatibility....
+			if obj.awestore_compat then obj.ended:fire(obj.pos, time, dx) end
 		end
 
 		--run subscribed in functions
-		for _, func in ipairs(subscribed) do
-			func(obj.pos, time, dx) end
-
+		obj:fire(obj.pos, time, dx)
 	end)
-
 
 
 	-- Set target and begin interpolation
@@ -252,6 +287,13 @@ local function timed(obj)
 		target = target_new	--sets target
 		time = 0			--resets time
 		coef = 1			--resets coefficient
+
+		-- does annoying awestore compatibility
+		if obj.awestore_compat then
+			obj.last = target
+			obj.started:fire(obj.pos, time, dx)
+		end
+
 
 		is_inter = timer.started
 
@@ -282,31 +324,11 @@ local function timed(obj)
 
 	end
 
-
 	-- Methods for updating stuff
-
 	-- update dt along with rate
 	function obj:update_rate(rate_new)
 		obj.rate = rate_new
 		dt = 1 / obj.rate
-	end
-
-	function obj:subscribe(func)
-		subscribed[s_counter] = func
-		subscribed_i[func] = s_counter
-		s_counter = s_counter + 1
-
-		--run function at pos to get it up to speed
-		func(obj.pos, time, dx)
-	end
-
-	--subscribe one given function
-	if obj.subscribed then obj:subscribe(obj.subscribed) end
-
-	function obj:unsubscribe(func)
-		table.remove(subscribed, subscribed_i[func])
-		table.remove(subscribed_i, func)
-		s_counter = s_counter - 1
 	end
 
 	function obj:reset(func)
@@ -320,9 +342,11 @@ local function timed(obj)
 		coef = 1
 	end
 
-	function obj:is_started() return timer.started end
+	--subscribe stuff
+	obj.subscribe_callback = function(func) func(obj.pos, time, dt) end
+	if args.subscribed ~= nil then obj:subscribe(args.subscribed) end
 
-	function obj:initial() return obj.init_pos end
+	function obj:is_started() return timer.started end
 
 	function obj:abort()
 		is_inter = false
