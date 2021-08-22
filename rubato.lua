@@ -161,6 +161,7 @@ local function timed(obj)
 	obj.duration = obj.duration or 1
 	obj.rate = obj.rate or def_rate
 	obj.pos = obj.pos or 0
+	obj.init_pos = obj.pos
 
 	obj.prop_intro = obj.prop_intro or false
 
@@ -202,7 +203,6 @@ local function timed(obj)
 
 	local ps_pos			--pseudoposition
 	local coef				--dx coefficient if necessary
-
 
 
 	local timer = gears.timer { timeout = dt }
@@ -306,9 +306,23 @@ local function timed(obj)
 	function obj:unsubscribe(func)
 		table.remove(subscribed, subscribed_i[func])
 		table.remove(subscribed_i, func)
+		s_counter = s_counter - 1
+	end
+
+	function obj:reset(func)
+		time = 0
+		target = nil
+		dt = 1 / obj.rate
+		dx = 0
+		m = nil
+		b = nil
+		is_inter = false
+		coef = 1
 	end
 
 	function obj:is_started() return timer.started end
+
+	function obj:initial() return obj.init_pos end
 
 	function obj:abort()
 		is_inter = false
@@ -337,4 +351,3 @@ return {
 	quadratic = quadratic,
 	bouncy = bouncy,
 }
-
