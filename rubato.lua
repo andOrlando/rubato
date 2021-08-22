@@ -191,7 +191,7 @@ local function timed(obj)
 	local s_counter = 1
 
 	--TODO: fix double pos thing
-	local time				--elapsed time in seconds
+	local time = 0			--elapsed time in seconds
 	local target			--target value for pos
 	local dt = 1 / obj.rate	--dt based off rate
 	local dx = 0			--variable slope
@@ -297,7 +297,7 @@ local function timed(obj)
 		s_counter = s_counter + 1
 
 		--run function at pos to get it up to speed
-		func(obj.pos)
+		func(obj.pos, time, dx)
 	end
 
 	--subscribe one given function
