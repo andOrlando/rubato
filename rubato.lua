@@ -306,6 +306,11 @@ local function timed(obj)
 	function obj:unsubscribe(func)
 		table.remove(subscribed, subscribed_i[func])
 		table.remove(subscribed_i, func)
+		time = 0
+		dt = 1 / obj.rate
+		dx = 0
+		obj.pos = obj.pos or 0
+		s_counter = s_counter - 1
 	end
 
 	function obj:is_started() return timer.started end
