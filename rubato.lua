@@ -205,7 +205,6 @@ local function timed(obj)
 	local coef				--dx coefficient if necessary
 
 
-
 	local timer = gears.timer { timeout = dt }
 	timer:connect_signal("timeout", function()
 
@@ -317,8 +316,8 @@ local function timed(obj)
 		dx = 0
 		m = nil
 		b = nil
-		is_inter = nil
-		coef = nil
+		is_inter = false
+		coef = 1
 	end
 
 	function obj:is_started() return timer.started end
@@ -352,4 +351,3 @@ return {
 	quadratic = quadratic,
 	bouncy = bouncy,
 }
-
