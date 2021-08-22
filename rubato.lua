@@ -161,6 +161,7 @@ local function timed(obj)
 	obj.duration = obj.duration or 1
 	obj.rate = obj.rate or def_rate
 	obj.pos = obj.pos or 0
+	obj.init_pos = obj.pos
 
 	obj.prop_intro = obj.prop_intro or false
 
@@ -321,6 +322,8 @@ local function timed(obj)
 	end
 
 	function obj:is_started() return timer.started end
+
+	function obj:initial() return obj.init_pos end
 
 	function obj:abort()
 		is_inter = false
