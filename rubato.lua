@@ -229,6 +229,7 @@ local function timed(obj)
 		--weirdness is to try to get closest to duration
 		if obj.duration - time < dt / 2 then
 			obj.pos = target --snaps to target in case of small error
+			time = obj.duration --snaps time to duration
 
 			is_inter = false --resets intermittent
 			timer:stop()	 --stops itself
