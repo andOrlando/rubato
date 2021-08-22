@@ -11,7 +11,7 @@ Basically like [awestore](https://github.com/K4rakara/awestore) but not really.
 
 Join the cool curve crew
 
-<img src="https://cdn.discordapp.com/attachments/702548961780826212/879022533314216007/download.jpeg">
+<img src="https://cdn.discordapp.com/attachments/702548961780826212/879022533314216007/download.jpeg" height=160>
 
 The general premise of this is that I don't understand how awestore works. That
 and I really wanted to be able to have an interpolator that didn't have a set
