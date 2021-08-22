@@ -1,5 +1,4 @@
 local gears = require "gears"
-local naughty = require 'naughty'
 
 --- Linear easing (in quotes).
 local linear = {

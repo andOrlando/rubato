@@ -9,6 +9,10 @@
 
 Basically like [awestore](https://github.com/K4rakara/awestore) but not really.
 
+Join the cool curve crew
+
+![imagine not having a cool slope curve][https://cdn.discordapp.com/attachments/702548961780826212/879022533314216007/download.jpeg]
+
 The general premise of this is that I don't understand how awestore works. That
 and I really wanted to be able to have an interpolator that didn't have a set
 time. That being said, I haven't made an interpolator that doesn't have a set
@@ -35,7 +39,7 @@ which is just the antiderivative, and is beautifully eased. The length of the
 depends on the easing you give it. The maximum height of the function is
 generated on the fly via this wonderful formula:
 
-<img src="https://render.githubusercontent.com/render/math?math=m=\frac{d %2B ib(F_i(1)-1)}{i(F_i(1)-1) %2B o(F_o(1)-1) %2B t}" height=50>
+<img src="https://render.githubusercontent.com/render/math?math=m=\color{blue}\frac{d %2B ib(F_i(1)-1)}{i(F_i(1)-1) %2B o(F_o(1)-1) %2B t}" height=50>
 
 where `i` is intro duration, `F_i` is the antiderivative of the intro easing
 function, `o` is outro duration, `F_o` is the antiderivative of the outro easing
@@ -120,6 +124,7 @@ Arguments come in the form of a table.
    when `dx` and `b` have opposite signs at the cost of having to do a little
    more work (and making my hard work on finding the formula for `m` worthless 
    :slightly_frowning_face:) (def. `false`)
+ - `awestore_compat`: Make api even *more* similar to awestore's
 
 *with the caviat that if the outro being the same as the intro would result in
 an error, it would go for the largest allowable outro time. Ex: duration = 1,
