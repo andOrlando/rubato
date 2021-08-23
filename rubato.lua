@@ -212,7 +212,18 @@ local function timed(args)
 		target = nil
 	}
 
+	-- annoying awestore compatibility
+	if obj.awestore_compat then
+		obj._initial = obj.pos
+		obj._last = 0
 
+		function obj:initial() return obj._initial end
+		function obj:last() return obj._last end
+
+		obj.started = subscribable()
+		obj.ended = subscribable()
+
+	end
 
 	--TODO: fix double pos thing
 	-- Variables used in calculation
@@ -280,12 +291,15 @@ local function timed(args)
 
 		-- does annoying awestore compatibility
 		if obj.awestore_compat then
-			obj.last = obj._props.target
+			obj._initial = obj.pos
+			obj._last = obj._props.target
 			obj.started:fire(obj.pos, time, dx)
 		end
 
 
 		is_inter = timer.started
+
+		if obj.awestore_compat then naughty.notify {text=tostring(obj:initial())} end
 
 		b = timer.started and dx or 0
 		m = get_slope(is_inter and obj.easing_inter.F or obj.easing.F,
@@ -314,6 +328,8 @@ local function timed(args)
 
 	end
 
+	if obj.awestore_compat then function obj:set(target) set(target) end end
+
 	-- Functions for setting state
 	-- Completely resets the timer
 	function obj:reset(func)
@@ -337,20 +353,7 @@ local function timed(args)
 	obj.subscribe_callback = function(func) func(obj.pos, time, dt) end
 	if args.subscribed ~= nil then obj:subscribe(args.subscribed) end
 
-	-- annoying awestore compatibility
-	if obj.awestore_compat then
-		obj.initial = obj.pos
-		obj.last = 0
-
-		function obj:initial() return obj.initial end
-		function obj:last() return obj.last end
-		function obj:set(target) set(target) end
-
-		obj.started = subscribable()
-		obj.ended = subscribable()
-
-	end
-
+	
 	-- Metatable for cooler api
 	local mt = {}
 	mt.__index = function(self, key)
