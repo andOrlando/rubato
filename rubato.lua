@@ -1,4 +1,5 @@
 local gears = require "gears"
+local naughty = require 'naughty'
 
 --- Linear easing (in quotes).
 local linear = {
@@ -43,45 +44,37 @@ local bouncy = {
 }
 
 local def_rate = 30
---- Set default refresh rate
--- @param rate refresh rate
+--- Set default refresh rate for the library
 local function set_def_rate(rate)
 	def_rate = rate
 end
 
 --- Get the slope (this took me forever to find).
--- @param i intro duration
--- @param o outro duration
--- @param t total duration
--- @param d distance
--- @param F_1 value of the antiderivate at 1: F_1(1)
--- @param F_2 value of the outro antiderivative at 1: F_2(1)
--- @param[opt] b y-intercept
--- @return m the slope
+-- i is intro duration
+-- o is outro duration
+-- t is total duration
+-- d is distance to cover
+-- F_1 is the value of the antiderivate at 1: F_1(1)
+-- F_2 is the value of the outro antiderivative at 1: F_2(1)
+-- b is the y-intercept
+-- m is the slope
 -- @see timed
 local function get_slope(i, o, t, d, F_1, F_2, b)
 	return (d + i * b * (F_1 - 1)) / (i * (F_1 - 1) + o * (F_2 - 1) + t)
 end
 
 --- Get the dx based off of a bunch of factors
--- @param time current time
--- @param duration total duration
--- @param intro intro duration
--- @param intro_e intro easing function
--- @param outro outro duration
--- @param outro_e outro easing funciton
--- @param m slope
--- @param b y-intercept
 -- @see timed
 local function get_dx(time, duration, intro, intro_e, outro, outro_e, m, b)
+	-- Intro math. Scales by difference between initial slope and target slope
 	if time <= intro then
 		return intro_e(time / intro) * (m - b) + b
 
-	--outro math
+	-- Outro math
 	elseif (duration - time) <= outro then
 		return outro_e((duration - time) / outro) * m
 
-	--otherwise
+	-- Otherwise (it's in the plateau)
 	else return m end
 end
 
@@ -89,34 +82,26 @@ end
 local simulate_easing_mem = {}
 setmetatable(simulate_easing_mem, {__mode="kv"})
 
---- Simulates the easing to get the result to find a coefficient
--- @param pos initial position
--- @param duration duration
--- @param intro intro duration
--- @param intro_e intro easing function
--- @param outro outro duration
--- @param outro_e outro easing funciton
--- @param inter whether or not it's in an intermittent state
--- @param inter_e inter easing function
--- @param m slope
--- @param b y-intercept
--- @param dt change in time
+--- Simulates the easing to get the result to find an error coefficient
+-- Uses the coefficient to adjust dx so that it's guaranteed to hit the target
+-- This must be called when the sign of the target slope is changing
 -- @see timed
 local function simulate_easing(pos, duration, intro, intro_e, outro, outro_e, m, b, dt)
 	local ps_time = 0
 	local ps_pos = pos
 	local dx
 
-	key = string.format("%f %f %f %s %f %s %s %s",
+	-- Key for cacheing results
+	local key = string.format("%f %f %f %s %f %s %s %s",
 		pos, duration,
 		intro, intro_e,
 		outro, outro_e,
 		m, b)
 
-	if simulate_easing_mem[key] then
-		return simulate_easing_mem[key]
-	end
+	-- Short circuits if it's already done the calculation
+	if simulate_easing_mem[key] then return simulate_easing_mem[key] end
 
+	-- Effectively runs the exact same  code to find what the target will be
 	while duration - ps_time >= dt / 2 do
 		--increment time
 		ps_time = ps_time + dt
@@ -135,12 +120,15 @@ local function simulate_easing(pos, duration, intro, intro_e, outro, outro_e, m,
 	return ps_pos
 end
 
+-- Kidna copying awesotre's stores on a surface level for added compaatibility
 local function subscribable(obj)
 	local obj = obj or {}
 	local subscribed = {}
 	local subscribed_i = {}
 	local s_counter = 0
 
+	-- Subscrubes a function to the object so that it's called when `fire` is
+	-- Calls subscribe_callback if it exists as well
 	function obj:subscribe(func)
 		subscribed[s_counter] = func
 		subscribed_i[func] = s_counter
@@ -149,9 +137,18 @@ local function subscribable(obj)
 		if self.subscribe_callback then self.subscribe_callback(func) end
 	end
 
+	-- Unsubscribes a function and calls unsubscribe_callback if it exists
 	function obj:unsubscribe(func)
-		table.remove(subscribed, subscribed_i[func])
-		table.remove(subscribed_i, func)
+		if not func then
+			subscribed = {}
+			subscribed_i = {}
+			s_counter = 0
+		else
+			table.remove(subscribed, subscribed_i[func])
+			table.remove(subscribed_i, func)
+		end
+
+		if self.unsubscribe_callback then self.unsubscribe_callback(func) end
 	end
 
 	function obj:fire(...) for _, func in pairs(subscribed) do func(...) end end
@@ -170,12 +167,11 @@ end
 -- @field easing_outro easing method for outro (same as easing)
 -- @field easing_inter intermittent easing method (same as easing)
 -- @field subscribed an initial function to subscribe (nil)
--- @field prop_intro whether or not the durations given from intro, outro
--- and inter are proportional or just static times
+-- @field prop_intro whether or not the durations given from intro, outro and inter are proportional (false)
+-- @field awestore_compat if true, increase awestore compatibility (false
 -- @return timed interpolator
 -- @method timed:subscribe(func) subscribe a function to the timer refresh
--- @method timed:update_rate(rate_new) please use this function instead of
--- manually updating rate
+-- @method timed:update_rate(rate_new) please use this function instead of manually updating rate
 -- @method timed:set(target_new) set the target value for pos to end at
 local function timed(args)
 
@@ -183,7 +179,6 @@ local function timed(args)
 
 	--set up default arguments
 	obj.duration = args.duration or 1
-	obj.rate = args.rate or def_rate
 	obj.pos = args.pos or 0
 
 	obj.prop_intro = args.prop_intro or false
@@ -211,32 +206,28 @@ local function timed(args)
 	obj.log = args.log or false
 	obj.awestore_compat = args.awestore_compat or false
 
+	-- hidden properties
+	obj._props = {
+		rate = args.rate or def_rate,
+		target = nil
+	}
 
-	-- annoying awestore compatibility
-	if obj.awestore_compat then
-		obj.initial = obj.pos
-		obj.last = 0
 
-		function obj:initial() return obj.initial end
-		function obj:last() return obj.last end
-
-		obj.started = subscribable()
-		obj.ended = subscribable()
-
-	end
 
 	--TODO: fix double pos thing
-	local time = 0			--elapsed time in seconds
-	local target			--target value for pos
-	local dt = 1 / obj.rate	--dt based off rate
-	local dx = 0			--variable slope
-	local m					--maximum slope  @see obj:set
-	local b					--y-intercept  @see obj:set
-	local easing			--placeholder easing function variable
-	local is_inter			--checks if it's in an intermittent state
+	-- Variables used in calculation
+	local time = 0
+	--local target
+	local dt = 1 / obj._props.rate
+	local dx = 0
+	local m
+	local b
+	local easing --placeholder function for easing
+	local is_inter --whether or not it's intermittente
 
-	local ps_pos			--pseudoposition
-	local coef				--dx coefficient if necessary
+	-- Variables used in simulation
+	local ps_pos
+	local coef
 
 
 	local timer = gears.timer { timeout = dt }
@@ -262,7 +253,7 @@ local function timed(args)
 		--sets up when to stop by time
 		--weirdness is to try to get closest to duration
 		if obj.duration - time < dt / 2 then
-			obj.pos = target --snaps to target in case of small error
+			obj.pos = obj._props.target --snaps to target in case of small error
 			time = obj.duration --snaps time to duration
 
 			is_inter = false --resets intermittent
@@ -278,18 +269,18 @@ local function timed(args)
 
 
 	-- Set target and begin interpolation
-	function obj:set(target_new)
+	local function set(target_new)
 
 		--disallow setting it twice (because it makes it go wonky)
-		if target == target_new then return end
+		if obj._props.target == target_new then return end
 
-		target = target_new	--sets target
+		obj._props.target = target_new	--sets target
 		time = 0			--resets time
 		coef = 1			--resets coefficient
 
 		-- does annoying awestore compatibility
 		if obj.awestore_compat then
-			obj.last = target
+			obj.last = obj._props.target
 			obj.started:fire(obj.pos, time, dx)
 		end
 
@@ -301,7 +292,7 @@ local function timed(args)
 		    (is_inter and obj.inter or obj.intro) * (obj.prop_intro and obj.duration or 1),
 		    obj.outro * (obj.prop_intro and obj.duration or 1),
 		    obj.duration,
-		    target - obj.pos,
+		    obj._props.target - obj.pos,
 		    is_inter and obj.easing_inter.F or obj.easing.F,
 		    obj.easing_outro.F,
 		    b)
@@ -315,7 +306,7 @@ local function timed(args)
 				m, b, dt)
 
 			--get coefficient by calculating ratio of theoretical range : experimental range
-			coef = (obj.pos - target) / (obj.pos - ps_pos)
+			coef = (obj.pos - obj._props.target) / (obj.pos - ps_pos)
 			if coef ~= coef then coef = 1 end --check for div by 0 resulting in nan
 		end
 
@@ -323,17 +314,12 @@ local function timed(args)
 
 	end
 
-	-- Methods for updating stuff
-	-- update dt along with rate
-	function obj:update_rate(rate_new)
-		obj.rate = rate_new
-		dt = 1 / obj.rate
-	end
-
+	-- Functions for setting state
+	-- Completely resets the timer
 	function obj:reset(func)
+		timer:stop()
 		time = 0
-		target = nil
-		dt = 1 / obj.rate
+		obj._props.target = nil
 		dx = 0
 		m = nil
 		b = nil
@@ -341,26 +327,70 @@ local function timed(args)
 		coef = 1
 	end
 
-	--subscribe stuff
+	-- Effectively pauses the timer
+	function obj:abort()
+		timer:stop()
+		is_inter = false
+	end
+
+	--subscribe stuff initially and add callback
 	obj.subscribe_callback = function(func) func(obj.pos, time, dt) end
 	if args.subscribed ~= nil then obj:subscribe(args.subscribed) end
 
-	function obj:is_started() return timer.started end
+	-- annoying awestore compatibility
+	if obj.awestore_compat then
+		obj.initial = obj.pos
+		obj.last = 0
 
-	function obj:abort()
-		is_inter = false
-		timer:stop()
+		function obj:initial() return obj.initial end
+		function obj:last() return obj.last end
+		function obj:set(target) set(target) end
+
+		obj.started = subscribable()
+		obj.ended = subscribable()
+
 	end
+
+	-- Metatable for cooler api
+	local mt = {}
+	mt.__index = function(self, key)
+		print(key)
+		-- Returns the state value
+		if key == "state" then return timer.started
+
+		-- If it's in _props return it from props
+		elseif self._props[key] then return self._props[key]
+
+		-- Otherwise just be nice
+		else return rawget(self, key) end
+	end
+	mt.__newindex = function(self, key, value)
+		-- Rate must update both dt and timeout
+		if key == "rate" then
+			dt = 1 / value
+			timer.timeout = dt
+
+		-- Don't allow for setting state
+		elseif key == "state" then return
+
+		-- Changing target should call set
+		elseif key == "target" then set(value) --set target
+
+		-- If it's in _props set it there
+		elseif self._props[key] ~= nil then self._props[key] = value
+
+		-- Otherwise just set it normally
+		else rawset(self, key, value) end
+	end
+
+	setmetatable(obj, mt)
 
 	return obj
 
 end
 
---- TODO: Targegt function.
+--- TODO: Targegt function, has variable time rather than variable speed
 local function target(obj)
-
-
-
 	return obj
 end
 
