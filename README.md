@@ -100,7 +100,7 @@ Also it has a cooler name
 
 **For rubato.timed**:
 
-Arguments come in the form of a table.
+Arguments (in the form of a table):
  - `duration`: the total duration of the animation
  - `rate`: the number of times per second the timer executes. Higher rates mean
    smoother animations and less error.
@@ -126,20 +126,12 @@ All of these values (except awestore_compat and subscribed) are mutable and chan
 change how the animation looks. I do not suggest changing `pos`, however, unless you change the
 position of what's going to be animated in some other way
 
-*with the caviat that if the outro being the same as the intro would result in an error, it would go
+\*with the caviat that if the outro being the same as the intro would result in an error, it would go
 for the largest allowable outro time. Ex: duration = 1, intro = 0.6, then outro will default to 0.4.
 
-**actual class methods and properties**
-
-Useful table entires:
- - `target`: returns the current target or sets the current target and starts the animation
+Useful properties:
+ - `target`: when set, sets the target and starts the animation, otherwise returns the target
  - `state`: immutable, returns true if an animation is in progress
- - `started`: subscribable table which is called when the animation starts or is interrupted
-   + `started:subscribe(func)`: subscribes a function
-   + `started:unsubscribe(func)`: unsubscribes a function
- - `ended`: subscribable table which is called when the animation ends
-   + `ended:subscribe(func)`: subscribes a function
-   + `ended:unsubscribe(func)`: unsubscribes a function
 
 Methods are as follows:
  - `timed:subscribe(func)`: subscribe a function to be ran every refresh of the animation
@@ -148,12 +140,19 @@ Methods are as follows:
  - `timed:restart()`: restart the animaiton from it's approximate initial state (if a value is 
  changed during the animation it will remain changed after calling restart)
 
-Awestore compatibility functions:
+Awestore compatibility functions (`awestore_compat` must be true):
  - `timed:set(target_new)`: sets the position the animation should go to, effectively the same 
  as setting target
  - `timed:initial()`: returns the intiial position
  - `timed:last()`: returns the target position, effectively the same as `timed.target`
 
+Awestore compatibility properties:
+ - `started`: subscribable table which is called when the animation starts or is interrupted
+   + `started:subscribe(func)`: subscribes a function
+   + `started:unsubscribe(func)`: unsubscribes a function
+ - `ended`: subscribable table which is called when the animation ends
+   + `ended:subscribe(func)`: subscribes a function
+   + `ended:unsubscribe(func)`: unsubscribes a function
 
 **builtin easing functions**
  - `rubato.zero`: linear easing, zero slope
