@@ -1,5 +1,4 @@
 local gears = require "gears"
-local naughty = require 'naughty'
 
 --- Linear easing (in quotes).
 local linear = {
@@ -299,7 +298,6 @@ local function timed(args)
 
 		is_inter = timer.started
 
-		if obj.awestore_compat then naughty.notify {text=tostring(obj:initial())} end
 
 		b = timer.started and dx or 0
 		m = get_slope(is_inter and obj.easing_inter.F or obj.easing.F,
@@ -356,7 +354,7 @@ local function timed(args)
 	
 	-- Metatable for cooler api
 	local mt = {}
-	mt.__index = function(self, key)
+	function mt:__index(key)
 		print(key)
 		-- Returns the state value
 		if key == "state" then return timer.started
@@ -367,7 +365,7 @@ local function timed(args)
 		-- Otherwise just be nice
 		else return rawget(self, key) end
 	end
-	mt.__newindex = function(self, key, value)
+	function mt:__newindex(key, value)
 		-- Rate must update both dt and timeout
 		if key == "rate" then
 			dt = 1 / value
