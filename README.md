@@ -106,7 +106,7 @@ Arguments (in the form of a table):
    smoother animations and less error.
  - `pos`: the initial position of the animation (def. `0`)
  - `intro`: the duration of the intro
- - `outro`: the duration of the outro (def. same as `intro`*)
+ - `outro`: the duration of the outro (def. same as `intro`\*)
  - `inter`: the duration of the between-animation time (def. same as `intro`)
  - `prop_intro`: When `true`, `intro`, `outro` and `inter` represent proportional
    values; 0.5 would be half the duration. (def. `false`)
@@ -155,10 +155,10 @@ Awestore compatibility properties:
    + `ended:unsubscribe(func)`: unsubscribes a function
 
 **builtin easing functions**
- - `rubato.zero`: linear easing, zero slope
- - `rubato.linear`: linear slope, quadratic easing
- - `rubato.quadratic`: quadratic slope, cubic easing
- - `rubato.bouncy`: the bouncy thing as shown in the example
+ - `easing.zero`: linear easing, zero slope
+ - `easing.linear`: linear slope, quadratic easing
+ - `easing.quadratic`: quadratic slope, cubic easing
+ - `easing.bouncy`: the bouncy thing as shown in the example
 
 <h1 id="c-e-f">Custom Easing Functions</h1>
 
@@ -280,10 +280,22 @@ find the derivative and antiderivative of the derivative.
 
 So actually telling people how to install this is important, isn't it
 
-basically, just somewhere in your awesome directory, (I use `~/.config/awesome/lib`) run this
-command:  `wget https://raw.githubusercontent.com/andOrlando/rubato/main/rubato.lua`
+It supports luarocks, so that'll cut it if you want a really really easy install, but it'll install
+it in some faraway lua bin where you'll probably leave it forever if you either stop using rubato or
+stop using awesome. However, it's certainly the easiest way to go about it.
 
-Then, whenever you actually want to use rubato, do this at the start of the lua file  `local rubato
+```
+luarocks install rubato
+```
+
+Otherwise, somewhere in your awesome directory, (I use `~/.config/awesome/lib`) you can run this
+command: 
+
+```
+git clone rubato
+```
+
+Then, whenever you actually want to use rubato, do this at the start of the lua file: `local rubato
 = require "lib.rubato"`
 
 <h1 id="name">Why the name?</h1>
