@@ -1,52 +1,5 @@
+local easing = require(RUBATO_DIR.."easing")
 local gears = require "gears"
-
---- Linear easing (in quotes).
-local linear = {
-	F = 0.5,
-	easing = function(t) return t end
-}
-
---- Sublinear (?) easing.
-local zero = {
-	F = 1,
-	easing = function() return 1 end
-}
-
---- Quadratic easing.
-local quadratic = {
-	F = 1/3,
-	easing = function(t) return t * t end
-}
-
---bouncy constants
-local b_cs = {
-	c1 = 6 * math.pi - 3 * math.sqrt(3) * math.log(2),
-	c2 = math.sqrt(3) * math.pi,
-	c3 = 6 * math.sqrt(3) * math.log(2),
-	c4 = 6 * math.pi - 6147 * math.sqrt(3) * math.log(2),
-	c5 = 46 * math.pi / 6
-}
-
---the bouncy one as seen in the readme
-local bouncy = {
-	F = (20 * math.pi - (10 * math.log(2) - 2049) * math.sqrt(3)) /
-		(20 * math.pi - 20490 * math.sqrt(3) * math.log(2)),
-	easing = function(t)
-		--short circuit
-		if t == 0 then return 0 end
-		if t == 1 then return 1 end
-
-		local c1 = (20 * t * math.pi) / 3 - b_cs.c5
-		local c2 = math.pow(2, 10 * t + 1)
-		return (b_cs.c1 + b_cs.c2 * c2 * math.cos(c1) + b_cs.c3 * c2 * math.sin(c1)) / b_cs.c4
-	end
-}
-
-local def_rate = 30
---- Set default refresh rate for the library
-local function set_def_rate(rate)
-	def_rate = rate
-end
 
 --- Get the slope (this took me forever to find).
 -- i is intro duration
@@ -120,8 +73,8 @@ local function simulate_easing(pos, duration, intro, intro_e, outro, outro_e, m,
 end
 
 -- Kidna copying awesotre's stores on a surface level for added compaatibility
-local function subscribable(obj)
-	local obj = obj or {}
+local function subscribable(args)
+	local obj = args or {}
 	local subscribed = {}
 	local subscribed_i = {}
 	local s_counter = 0
@@ -189,14 +142,14 @@ local function timed(args)
 	if obj.intro > (obj.prop_intro and 0.5 or obj.duration) and not args.outro then
 		obj.outro = math.max((args.prop_intro and 1 or args.duration - args.intro), 0)
 
-	elseif not args.outro then obj.outro = args.intro
+	elseif not args.outro then obj.outro = obj.intro
 	else obj.outro = args.outro end
 
 	--assert that these values are valid
 	assert(obj.intro + obj.outro <= obj.duration or obj.prop_intro, "Intro and Outro must be less than or equal to total duration")
 	assert(obj.intro + obj.outro <= 1 or not obj.prop_intro, "Proportional Intro and Outro must be less than or equal to 1")
 
-	obj.easing = args.easing or linear
+	obj.easing = args.easing or easing.linear
 	obj.easing_outro = args.easing_outro or obj.easing
 	obj.easing_inter = args.easing_inter or obj.easing
 
@@ -207,7 +160,7 @@ local function timed(args)
 
 	-- hidden properties
 	obj._props = {
-		rate = args.rate or def_rate,
+		rate = args.rate or RUBATO_DEF_RATE or 30,
 		target = nil
 	}
 
@@ -387,18 +340,4 @@ local function timed(args)
 
 end
 
---- TODO: Targegt function, has variable time rather than variable speed
-local function target(obj)
-	return obj
-end
-
-return {
-	set_def_rate = set_def_rate,
-	timed = timed,
-
-	target = target,
-	linear = linear,
-	zero = zero,
-	quadratic = quadratic,
-	bouncy = bouncy,
-}
+return timed
