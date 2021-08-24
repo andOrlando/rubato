@@ -9,7 +9,7 @@ local linear = {
 --- Sublinear (?) easing.
 local zero = {
 	F = 1,
-	easing = function(t) return 1 end
+	easing = function() return 1 end
 }
 
 --- Quadratic easing.
@@ -194,7 +194,7 @@ local function timed(args)
 
 	--assert that these values are valid
 	assert(obj.intro + obj.outro <= obj.duration or obj.prop_intro, "Intro and Outro must be less than or equal to total duration")
-	assert(obj.intro + obj.outro <= 1 or not prop_intro, "Proportional Intro and Outro must be less than or equal to 1")
+	assert(obj.intro + obj.outro <= 1 or not obj.prop_intro, "Proportional Intro and Outro must be less than or equal to 1")
 
 	obj.easing = args.easing or linear
 	obj.easing_outro = args.easing_outro or obj.easing
@@ -232,7 +232,6 @@ local function timed(args)
 	local dx = 0
 	local m
 	local b
-	local easing --placeholder function for easing
 	local is_inter --whether or not it's intermittente
 
 	-- Variables used in simulation
@@ -290,7 +289,6 @@ local function timed(args)
 
 		-- does annoying awestore compatibility
 		if obj.awestore_compat then
-			obj._initial = obj.pos
 			obj._last = obj._props.target
 			obj.started:fire(obj.pos, time, dx)
 		end
@@ -300,8 +298,7 @@ local function timed(args)
 
 
 		b = timer.started and dx or 0
-		m = get_slope(is_inter and obj.easing_inter.F or obj.easing.F,
-		    (is_inter and obj.inter or obj.intro) * (obj.prop_intro and obj.duration or 1),
+		m = get_slope((is_inter and obj.inter or obj.intro) * (obj.prop_intro and obj.duration or 1),
 		    obj.outro * (obj.prop_intro and obj.duration or 1),
 		    obj.duration,
 		    obj._props.target - obj.pos,
@@ -309,7 +306,7 @@ local function timed(args)
 		    obj.easing_outro.F,
 		    b)
 
-		if not override_simulate or b / math.abs(b) ~= m / math.abs(m) then
+		if obj.override_simulate or b / math.abs(b) ~= m / math.abs(m) then
 			ps_pos = simulate_easing(obj.pos, obj.duration,
 				(is_inter and obj.inter or obj.intro) * (obj.prop_intro and obj.duration or 1),
 				is_inter and obj.easing_inter.easing or obj.easing.easing,
@@ -330,7 +327,7 @@ local function timed(args)
 
 	-- Functions for setting state
 	-- Completely resets the timer
-	function obj:reset(func)
+	function obj:reset()
 		timer:stop()
 		time = 0
 		obj._props.target = nil
@@ -351,7 +348,7 @@ local function timed(args)
 	obj.subscribe_callback = function(func) func(obj.pos, time, dt) end
 	if args.subscribed ~= nil then obj:subscribe(args.subscribed) end
 
-	
+
 	-- Metatable for cooler api
 	local mt = {}
 	function mt:__index(key)
