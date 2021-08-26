@@ -292,7 +292,7 @@ Otherwise, somewhere in your awesome directory, (I use `~/.config/awesome/lib`) 
 command: 
 
 ```
-git clone rubato
+git clone https://github.com/andOrlando/rubato.git
 ```
 
 Then, whenever you actually want to use rubato, do this at the start of the lua file: `local rubato
