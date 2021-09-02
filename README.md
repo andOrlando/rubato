@@ -1,5 +1,6 @@
 # rubato
 
+- [How to actually use it](#h-t-a-u-i)
 - [But why though?](#b-w-t)
 - [Arguments and Methods](#a-and-m)
 - [Custom Easing Functions](#c-e-f)
@@ -19,48 +20,74 @@ interpolator that doesn't have a set time yet, so I just have this instead. It h
 function to awestore but the method in which you actually go about doing the easing is very
 different.
 
-In this case, you essentially construct a graph of the slope you want for easing. The reason for
-that is, if you are working with the derivative the whole time, you can make transitions between
-slopes (basically interruptions of the animation) completely smooth. The only things you really need
-to supply are the duration of the animation, the duration of the intro, and the easing function, but
-much more is configurable.
+In this case, you essentially construct a graph of the slope you want for easing. The fundamental
+idea behind this is that the derivative of position is velocity, so if you want to not have any
+sharp changes in velocity just do everything on that graph and just take the antiderivative. This
+(hopefully) results in zero cases of choppy velocities as well as a more customizable slope curve.
 
-Essentially, it takes a curve like this
+In practice, it takes a user define slope-curve like this,
 
 ![Example Slope Curve](./images/slope_graph.png)
 
-and turns it into its antiderivative, which looks something like this
+and takes the antiderivative of it, which looks something like this
 
 ![Example Normal Graph](./images/normal_graph.png)
 
-which is just the antiderivative, and is beautifully eased. The length of the `y=±x` varies based
-off of the intro duration and the exact function used depends on the easing you give it. The maximum
-height of the function is generated on the fly via this wonderful formula:
+This is just the antiderivative, but it's beautifully eased. The length of the plateau in speed varies 
+based off of the intro duration and the exact function used depends on the easing you give it. It has to
+be generated dynamically becuase we must ensure that the area under the curve is equal to the distance we
+want to travel. The formula used to generate the height of that plateau is this wonderful formula:
 
 <img src="https://render.githubusercontent.com/render/math?math=\color{blue}m=\frac{d %2B ib(F_i(1)-1)}{i(F_i(1)-1) %2B o(F_o(1)-1) %2B t}" height=50>
 
 where `i` is intro duration, `F_i` is the antiderivative of the intro easing function, `o` is outro
 duration, `F_o` is the antiderivative of the outro easing function, `d` is the total distance needed
 to be traveled, `b` is the initial slope, and `t` is the total duration. How does this formula work?
-Magic (if you're actually interested, for some ungodly reason feel free to ask). How did I find it?
+Magic (if you're actually interested for some ungodly reason, feel free to ask). How did I find it?
 Also magic (hours of staring at xournal++ and debugging).
 
-Okay so this is what it looks like in action
+<h1 id="h-t-a-u-i">How to actually use it</h1>
+
+So to actually use it, just create the object, give it a couple parameters, give it some function to 
+execute, and then run it by updating target! In practice it'd look like this:
 
 ```lua
---what I actually use for my workspaces
+timed = rubato.timed {
+	intro = 0.2,
+	prop_intro = true,
+	duration = 0.5,
+	subscribed = function(pos) print(pos) end
+}
+
+--you can also achieve the same effect as the subscribed parameter with this:
+--timed:subscribe(function(pos) print(pos) end)
+
+--target is initially 0 (unless you set pos otherwise)
+timed.target = 1
+--here it would print out a bunch of values (15 by default) which
+--I would normally copy and paste here but my stdout is broken
+--on awesome rn so just pretend there are a bunch of floats here
+
+--and this'll send it back from 1 to 0
+timed.target = 0
+```
+
+If you're familiar with the awestore api and don't wanna use what I've got, you can use those methods 
+instead if you set `awestore_compat = true`.
+
+So what would this look like in action? Well here are some gifs in their 25 fps of glory
+
+```lua
+--this is the configuration I (at one point) use(ed) for my workspaces
 timed = rubato.timed {
 	intro = 0.1,
 	duration = 0.3
 }
-
---to actually make it do something
-timed.target = 3
 ```
 
 ![Normal Easing](./images/trapezoid_easing.gif)
 
-This is very subtly eased, however. A much more pronounced easing would look more like this:
+The above is very subtly eased. A somewhat more pronounced easing would look more like this:
 
 ```lua
 timed = rubato.timed {
@@ -85,7 +112,9 @@ can use whatever interpolator you so choose.  However, rubato does have one adva
 interruptions are as perfect as can be. It conserves the current position and slope of the previous
 animation when you start a new one, and even allows you to use a custom specific easing animation
 for interruptions. Basically the interruptions are mathematically as smooth as you can possibly make
-them. Kinda.
+them. Kinda. I've also been told it's smoother, and this library is solely focused on being an
+interpolator rather than being both an interpolator and a svelte api (though it does emulate it a
+little).
 
 Furthermore, if you use rubato, you get to brag about how annoying it was to set up a monstrous
 derivative just to write a custom easing function, like the one shown in [Custom Easing
@@ -282,7 +311,9 @@ So actually telling people how to install this is important, isn't it
 
 It supports luarocks, so that'll cut it if you want a really really easy install, but it'll install
 it in some faraway lua bin where you'll probably leave it forever if you either stop using rubato or
-stop using awesome. However, it's certainly the easiest way to go about it.
+stop using awesome. However, it's certainly the easiest way to go about it. I personally don't like
+doing this much because it adds it globally and I'm only gonna be using this with awesome, but it's
+a really easy install.
 
 ```
 luarocks install rubato
