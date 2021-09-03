@@ -41,8 +41,8 @@ local bouncy = {
 }
 
 return {
-    linear = linear,
-    zero = zero,
-    quadratic = quadratic,
-    bouncy = bouncy
+	linear = linear,
+	zero = zero,
+	quadratic = quadratic,
+	bouncy = bouncy
 }

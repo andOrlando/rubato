@@ -161,7 +161,7 @@ local function timed(args)
 	-- hidden properties
 	obj._props = {
 		rate = args.rate or RUBATO_DEF_RATE or 30,
-		target = nil
+		target = obj.pos
 	}
 
 	-- annoying awestore compatibility
@@ -252,12 +252,12 @@ local function timed(args)
 
 		b = timer.started and dx or 0
 		m = get_slope((is_inter and obj.inter or obj.intro) * (obj.prop_intro and obj.duration or 1),
-		    obj.outro * (obj.prop_intro and obj.duration or 1),
-		    obj.duration,
-		    obj._props.target - obj.pos,
-		    is_inter and obj.easing_inter.F or obj.easing.F,
-		    obj.easing_outro.F,
-		    b)
+			obj.outro * (obj.prop_intro and obj.duration or 1),
+			obj.duration,
+			obj._props.target - obj.pos,
+			is_inter and obj.easing_inter.F or obj.easing.F,
+			obj.easing_outro.F,
+			b)
 
 		if obj.override_simulate or b / math.abs(b) ~= m / math.abs(m) then
 			ps_pos = simulate_easing(obj.pos, obj.duration,
