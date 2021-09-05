@@ -343,5 +343,5 @@ about in the first place. Plus, it'll be the first of my projects without garbag
  - [x] get a better name... (I have a cool name now!)
  - [x] make readme cooler
  - [X] have better documentation and add to luarocks
- - [ ] remove gears dependancy
+ - [ ] remove gears dependency 
 
