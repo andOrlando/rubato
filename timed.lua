@@ -1,4 +1,5 @@
 local easing = require(RUBATO_DIR.."easing")
+local subscribable = require(RUBATO_DIR.."subscribable")
 local gears = require "gears"
 
 --- Get the slope (this took me forever to find).
@@ -72,42 +73,6 @@ local function simulate_easing(pos, duration, intro, intro_e, outro, outro_e, m,
 	return ps_pos
 end
 
--- Kidna copying awesotre's stores on a surface level for added compaatibility
-local function subscribable(args)
-	local obj = args or {}
-	local subscribed = {}
-	local subscribed_i = {}
-	local s_counter = 0
-
-	-- Subscrubes a function to the object so that it's called when `fire` is
-	-- Calls subscribe_callback if it exists as well
-	function obj:subscribe(func)
-		subscribed[s_counter] = func
-		subscribed_i[func] = s_counter
-		s_counter = s_counter + 1
-
-		if self.subscribe_callback then self.subscribe_callback(func) end
-	end
-
-	-- Unsubscribes a function and calls unsubscribe_callback if it exists
-	function obj:unsubscribe(func)
-		if not func then
-			subscribed = {}
-			subscribed_i = {}
-			s_counter = 0
-		else
-			table.remove(subscribed, subscribed_i[func])
-			table.remove(subscribed_i, func)
-		end
-
-		if self.unsubscribe_callback then self.unsubscribe_callback(func) end
-	end
-
-	function obj:fire(...) for _, func in pairs(subscribed) do func(...) end end
-
-	return obj
-end
-
 --- INTERPOLATE. bam. it still ends in a period. But this one is timed.
 -- @field duration the length of the animation (1)
 -- @field rate how many times per second the aniamtion refrehses (32)
@@ -120,7 +85,8 @@ end
 -- @field easing_inter intermittent easing method (same as easing)
 -- @field subscribed an initial function to subscribe (nil)
 -- @field prop_intro whether or not the durations given from intro, outro and inter are proportional (false)
--- @field awestore_compat if true, increase awestore compatibility (false
+-- @field awestore_compat if true, increase awestore compatibility (false)
+-- @field rapid_set if true, allow for setting the target multiple times (same as awestore_compat)
 -- @return timed interpolator
 -- @method timed:subscribe(func) subscribe a function to the timer refresh
 -- @method timed:update_rate(rate_new) please use this function instead of manually updating rate
@@ -157,6 +123,7 @@ local function timed(args)
 
 	obj.log = args.log or false
 	obj.awestore_compat = args.awestore_compat or false
+	obj.rapid_set = args.rapid_set ~= nil and args.rapid_set or obj.awestore_compat
 
 	-- hidden properties
 	obj._props = {
@@ -234,7 +201,7 @@ local function timed(args)
 	local function set(target_new)
 
 		--disallow setting it twice (because it makes it go wonky)
-		if obj._props.target == target_new then return end
+		if not obj.rapid_set and obj._props.target == target_new then return end
 
 		obj._props.target = target_new	--sets target
 		time = 0			--resets time
@@ -283,7 +250,7 @@ local function timed(args)
 	function obj:reset()
 		timer:stop()
 		time = 0
-		obj._props.target = nil
+		obj._props.target = obj.pos
 		dx = 0
 		m = nil
 		b = nil
@@ -305,7 +272,6 @@ local function timed(args)
 	-- Metatable for cooler api
 	local mt = {}
 	function mt:__index(key)
-		print(key)
 		-- Returns the state value
 		if key == "state" then return timer.started
 
