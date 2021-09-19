@@ -23,7 +23,8 @@ local function subscribable(args)
 			s_counter = 0
 		else
 			table.remove(subscribed, subscribed_i[func])
-			table.remove(subscribed_i, func)
+			subscribed_i[func] = nil
+			s_counter = s_counter - 1
 		end
 
 		if self.unsubscribe_callback then self.unsubscribe_callback(func) end
