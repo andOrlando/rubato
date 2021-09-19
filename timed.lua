@@ -193,10 +193,9 @@ local function timed(args)
 
 			-- awestore compatibility....
 			if obj.awestore_compat then obj.ended:fire(obj.pos, time, dx) end
-		else
-			--run subscribed in functions
-			obj:fire(obj.pos, time, dx)
-		end
+
+		--otherwise it just fires normally
+		else obj:fire(obj.pos, time, dx) end
 	end)
 
 

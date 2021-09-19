@@ -19,12 +19,10 @@ local function subscribable(args)
 	function obj:unsubscribe(func)
 		if not func then
 			subscribed = {}
-			subscribed_i = {}
 			s_counter = 0
 		else
-			table.remove(subscribed, subscribed_i[func])
+			subscribed[subscribed_i[func]] = nil
 			subscribed_i[func] = nil
-			s_counter = s_counter - 1
 		end
 
 		if self.unsubscribe_callback then self.unsubscribe_callback(func) end
