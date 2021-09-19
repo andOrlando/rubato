@@ -188,12 +188,15 @@ local function timed(args)
 			is_inter = false --resets intermittent
 			timer:stop()	 --stops itself
 
+			--run subscribed in functions
+			obj:fire(obj.pos, time, dx)
+
 			-- awestore compatibility....
 			if obj.awestore_compat then obj.ended:fire(obj.pos, time, dx) end
+		else
+			--run subscribed in functions
+			obj:fire(obj.pos, time, dx)
 		end
-
-		--run subscribed in functions
-		obj:fire(obj.pos, time, dx)
 	end)
 
 
