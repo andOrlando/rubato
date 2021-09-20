@@ -2,15 +2,12 @@
 local function subscribable(args)
 	local obj = args or {}
 	local subscribed = {}
-	local subscribed_i = {}
-	local s_counter = 0
 
 	-- Subscrubes a function to the object so that it's called when `fire` is
 	-- Calls subscribe_callback if it exists as well
 	function obj:subscribe(func)
-		subscribed[s_counter] = func
-		subscribed_i[func] = s_counter
-		s_counter = s_counter + 1
+		local id = tostring(func):gsub("function: ", "")
+		subscribed[id] = func
 
 		if self.subscribe_callback then self.subscribe_callback(func) end
 	end
@@ -19,10 +16,9 @@ local function subscribable(args)
 	function obj:unsubscribe(func)
 		if not func then
 			subscribed = {}
-			s_counter = 0
 		else
-			subscribed[subscribed_i[func]] = nil
-			subscribed_i[func] = nil
+			local id = tostring(func):gsub("function: ", "")
+			subscribed[id] = nil
 		end
 
 		if self.unsubscribe_callback then self.unsubscribe_callback(func) end
