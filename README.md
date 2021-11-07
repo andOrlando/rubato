@@ -1,9 +1,10 @@
 # rubato
 
-- [How to actually use it](#h-t-a-u-i)
-- [But why though?](#b-w-t)
-- [Arguments and Methods](#a-and-m)
-- [Custom Easing Functions](#c-e-f)
+- [Background and explanation](#background)
+- [How to actually use it](#useage)
+- [But why though?](#why)
+- [Arguments and Methods](#arguments-methods)
+- [Custom Easing Functions](#easing)
 - [Installation](#install)
 - [Why the name?](#name)
 - [Todo](#todo)
@@ -14,52 +15,47 @@ Join the cool curve crew
 
 <img src="https://cdn.discordapp.com/attachments/702548961780826212/879022533314216007/download.jpeg" height=160>
 
-The general premise of this is that I don't understand how awestore works. That and I really wanted
-to be able to have an interpolator that didn't have a set time. That being said, I haven't made an
-interpolator that doesn't have a set time yet, so I just have this instead. It has a similar
-function to awestore but the method in which you actually go about doing the easing is very
-different.
+<h1 id="background">Background and Explanation</h1>
 
-In this case, you essentially construct a graph of the slope you want for easing. The fundamental
-idea behind this is that the derivative of position is velocity, so if you want to not have any
-sharp changes in velocity just do everything on that graph and just take the antiderivative. This
-(hopefully) results in zero cases of choppy velocities as well as a more customizable slope curve.
+The general premise of this is that I don't understand how awestore works. That and I really wanted to be able to have an interpolator that didn't have a set time. That being said, I haven't made an interpolator that doesn't have a set time yet, so I just have this instead. It has a similar function to awestore but the method in which you actually go about doing the easing is very different.
 
-In practice, it takes a user define slope-curve like this,
+When creating an animation, the goal is to make it as smooth as humanly possible, but I was finding that with conventional methods, should the animation be interrupted with another call for animation, it would look jerky and inconsistent. You can see this jerkiness everywhere in websites made by professionals and it makes me very sad. I didn’t want that for my desktop so I used a bit of a different method.
 
-![Example Slope Curve](./images/slope_graph.png)
+This jerkiness is typically caused by discontinuous velocity graphs. One moment it’s slowing down, and the next it’s way too fast. This is caused by just lazily starting the animation anew when already in the process of animating. This kind of velocity graph looks like this:
 
-and takes the antiderivative of it, which looks something like this
+![Disconnected Velocity Graph](./images/disconnected_graph.png)
 
-![Example Normal Graph](./images/normal_graph.png)
+Whereas rubato takes into account this initial velocity and restarts animation taking it into account. In the case of one wanting to interpolate from one point to another and then back, it would look like this:
 
-This is just the antiderivative, but it's beautifully eased. The length of the plateau in speed varies 
-based off of the intro duration and the exact function used depends on the easing you give it. It has to
-be generated dynamically becuase we must ensure that the area under the curve is equal to the distance we
-want to travel. The formula used to generate the height of that plateau is this wonderful formula:
+![Connected Velocity Graph](./images/connected_graph.png)
+
+To ask one of you to give these graphs as inputs, however, would be really dumb. So instead we define an intro function and its duration, which in the figure above is the `y=x` portion, an outro function and its duration, which is the `y=-x` portion, and the rest is filled with constant velocity. The area under the curve for this must be equal to the position for this to end up at the correct position (antiderivative of velocity is position). If we know the area under the curve for the intro and outro functions, the only component we need to ensure that the antiderivative is equal to the position would be the height of the graph. We find that with this formula:
 
 <img src="https://render.githubusercontent.com/render/math?math=\color{blue}m=\frac{d %2B ib(F_i(1)-1)}{i(F_i(1)-1) %2B o(F_o(1)-1) %2B t}" height=50>
 
-where `i` is intro duration, `F_i` is the antiderivative of the intro easing function, `o` is outro
-duration, `F_o` is the antiderivative of the outro easing function, `d` is the total distance needed
-to be traveled, `b` is the initial slope, and `t` is the total duration. How does this formula work?
-Magic (if you're actually interested for some ungodly reason, feel free to ask). How did I find it?
-Also magic (hours of staring at xournal++ and debugging).
+where `m` is the height of the plateau, `i` is intro duration, `F_i` is the antiderivative of the intro easing function, `o` is outro duration, `F_o` is the antiderivative of the outro easing function, `d` is the total distance needed to be traveled, `b` is the initial slope, and `t` is the total duration.
 
-<h1 id="h-t-a-u-i">How to actually use it</h1>
+We then simulate the antiderivative by adding `v(t)` (or the y-value at time `t` on the slope graph) to the current position 30 times per second (by default, but I recommend 60). There is some inaccuracy since it’s not a perfect antiderivative and there’s some weirdness when going from positive slopes to negative slopes that I don’t know how to intelligently fix (I have to simulate the antiderivative beforehand and multiply everything by a coefficient to prevent weird errors), but overall it results in good looking interruptions and I get a dopamine hit whenever I see it in action.
+
+There are two main small issues that I can’t/don’t know how to fix mathematically:
+- It’s not perfectly accurate (it is perfectly accurate as `dt` goes to zero) which I don’t think is possible to fix unless I stop simulating the antiderivative and actually calc out the function, which seems time inefficient
+- When going from a positive m to a negative m, or in other words going backwards after going forwards in the animation, it will always undershoot by some value. I don’t know what that value is, I don’t know where it comes from, I don’t know how to fix it except for lots and lots of time-consuming testing, but it’s there. To compensate for this, whenever there’s a situation in which this will happen, I simulate the animation beforehand and multiply the entire animation by a corrective coefficient to make it do what I want
+
+So that’s how it works. I’d love any contributions anyone’s willing to give. I also have plans to create an interpolator without a set duration called `target` as opposed to `timed` when I have the time (or need it for my rice).
+
+<h1 id="usage">How to actually use it</h1>
 
 So to actually use it, just create the object, give it a couple parameters, give it some function to 
-execute, and then run it by updating target! In practice it'd look like this:
+execute, and then run it by updating `target`! In practice it'd look like this:
 
 ```lua
 timed = rubato.timed {
-	intro = 0.2,
-	prop_intro = true,
+	intro = 0.1,
 	duration = 0.5,
 	subscribed = function(pos) print(pos) end
 }
 
---you can also achieve the same effect as the subscribed parameter with this:
+--you can also achieve the same effect as the `subscribed` parameter with this:
 --timed:subscribe(function(pos) print(pos) end)
 
 --target is initially 0 (unless you set pos otherwise)
@@ -68,17 +64,16 @@ timed.target = 1
 --I would normally copy and paste here but my stdout is broken
 --on awesome rn so just pretend there are a bunch of floats here
 
---and this'll send it back from 1 to 0
+--and this'll send it back from 1 to 0, printing out another 15 #s
 timed.target = 0
 ```
 
 If you're familiar with the awestore api and don't wanna use what I've got, you can use those methods 
-instead if you set `awestore_compat = true`.
+instead if you set `awestore_compat = true`. It’s a drop-in replacement, so your old code should work perfectly with it. If it doesn’t, please make an issue and I’ll do my best to fix it. Please include the broken code so I can try it out myself.
 
-So what would this look like in action? Well here are some gifs in their 25 fps of glory
+So how do the animations actually look? Let’s check out what I (at one point) use(ed) for my workspaces:
 
 ```lua
---this is the configuration I (at one point) use(ed) for my workspaces
 timed = rubato.timed {
 	intro = 0.1,
 	duration = 0.3
@@ -99,33 +94,25 @@ timed = rubato.timed {
 
 ![Quadratic Easing](./images/quadratic_easing.gif)
 
-The first is the same trapezoid I had shown earlier, except the distance is different. The second's
-slope curve looks more like the one shown below. Note the lack of a plateau and longer duration
-which gives the more pronounced easing:
+The first animation’s velocity graph looks like a trapezoid, while the second looks like the graph shown below. Note the lack of a plateau and longer duration which gives the more pronounced easing:
 
 ![More Quadratic Easing](./images/triangleish.png)
 
-<h1 id="b-w-t">But why though?</h1>
+<h1 id="why">But why though?</h1>
 
-Why go through all this hastle? Why not just use awestore? That's a good question and to be fair you
-can use whatever interpolator you so choose.  However, rubato does have one advantage, which is that
-interruptions are as perfect as can be. It conserves the current position and slope of the previous
-animation when you start a new one, and even allows you to use a custom specific easing animation
-for interruptions. Basically the interruptions are mathematically as smooth as you can possibly make
-them. Kinda. I've also been told it's smoother, and this library is solely focused on being an
-interpolator rather than being both an interpolator and a svelte api (though it does emulate it a
-little).
+Why go through all this hassle? Why not just use awestore? That's a good question and to be fair you
+can use whatever interpolator you so choose. That being said, rubato is solely focused on animation, has mathematically perfect interruptions and I’ve been told it also looks smoother.
 
 Furthermore, if you use rubato, you get to brag about how annoying it was to set up a monstrous
 derivative just to write a custom easing function, like the one shown in [Custom Easing
-Function](#c-e-f)'s example. That's a benefit, not a downside, I promise.
+Function](#easing)'s example. That's a benefit, not a downside, I promise.
 
 Also maybe hopefully the code should be almost digestible kinda maybe. I tried my best to comment
-and documentate, but I actually have no idea how to do lua docs or luarocks or anything.
+and documentate, but I actually have no idea how to do lua docs or anything.
 
 Also it has a cooler name
 
-<h1 id="a-and-m">Arguments and Methods</h1>
+<h1 id="arguments-methods">Arguments and Methods</h1>
 
 **For rubato.timed**:
 
@@ -176,12 +163,12 @@ Awestore compatibility functions (`awestore_compat` must be true):
  - `timed:last()`: returns the target position, effectively the same as `timed.target`
 
 Awestore compatibility properties:
- - `started`: subscribable table which is called when the animation starts or is interrupted
-   + `started:subscribe(func)`: subscribes a function
-   + `started:unsubscribe(func)`: unsubscribes a function
- - `ended`: subscribable table which is called when the animation ends
-   + `ended:subscribe(func)`: subscribes a function
-   + `ended:unsubscribe(func)`: unsubscribes a function
+ - `timed.started`: subscribable table which is called when the animation starts or is interrupted
+   + `timed.started:subscribe(func)`: subscribes a function
+   + `timed.started:unsubscribe(func)`: unsubscribes a function
+ - `timed.ended`: subscribable table which is called when the animation ends
+   + `timed.ended:subscribe(func)`: subscribes a function
+   + `timed.ended:unsubscribe(func)`: unsubscribes a function
 
 **builtin easing functions**
  - `easing.zero`: linear easing, zero slope
@@ -189,7 +176,7 @@ Awestore compatibility properties:
  - `easing.quadratic`: quadratic slope, cubic easing
  - `easing.bouncy`: the bouncy thing as shown in the example
 
-<h1 id="c-e-f">Custom Easing Functions</h1>
+<h1 id="easing">Custom Easing Functions</h1>
 
 To make a custom easing function, it's pretty easy. You just need a table with two values:
 
@@ -211,7 +198,7 @@ For the sake of this tutorial, we'll do an extremely complex easing, "ease in el
 **Important:** You should really use sagemath or Wolfram Mathematica to get as exact of a derivative
 as you can. Wolfram Alpha doesn't cut it. I personally used sagemath because it's actually free,
 which is pretty cool. To take that one step further, I'd suggest using jupyter notebook in tandem
-with sagemath because if you do `%display latex` you get a super good looking output. If you can't
+with sagemath because if you run `%display latex` you get a super good looking output. If you can't
 use jupyter (or don't want to), `%display ascii_art` is a pretty cool alternative.
 
 The initial function, given by [easings.net](https://easings.net), is as follows:  
@@ -301,7 +288,7 @@ antiderivative and it's properly scaled, you can probably use any (real, differe
 under the sun.
 
 Note that if it's not properly scaled, this can be worked around (if you're lazy and don't care
-about a minor performance decrease). You can set `override_simulaton` to true. However, it is
+about a bit of a performance decrease). You can set `override_simulaton` to true. However, it is
 possible that it will not perform exactly as you expected if you do this so do your best to just
 find the derivative and antiderivative of the derivative.
 
@@ -331,8 +318,8 @@ Then, whenever you actually want to use rubato, do this at the start of the lua 
 
 <h1 id="name">Why the name?</h1>
 
-Beacuse I play piano so this kinda links up with other stuff I do, and rubato really well fits the
-project. In music, it means "push and pull of tempo" basically, which really is waht easing is all
+Because I play piano so this kinda links up with other stuff I do, and rubato really well fits the
+project. In music, it means "push and pull of tempo" basically, which really is what easing is all
 about in the first place. Plus, it'll be the first of my projects without garbage names
 ("minesweperSweeper," "Latin Learning").
 
@@ -344,4 +331,4 @@ about in the first place. Plus, it'll be the first of my projects without garbag
  - [x] make readme cooler
  - [X] have better documentation and add to luarocks
  - [ ] remove gears dependency 
-
+ - [ ] only apply corrective coefficient to plateau
