@@ -23,11 +23,17 @@ When creating an animation, the goal is to make it as smooth as humanly possible
 
 This jerkiness is typically caused by discontinuous velocity graphs. One moment it’s slowing down, and the next it’s way too fast. This is caused by just lazily starting the animation anew when already in the process of animating. This kind of velocity graph looks like this:
 
-![Disconnected Velocity Graph](./images/disconnected_graph.png)
+<img src="images/disconnected_graph.png" alt="Disconnected Velocity Graph" height=160/>
 
 Whereas rubato takes into account this initial velocity and restarts animation taking it into account. In the case of one wanting to interpolate from one point to another and then back, it would look like this:
 
-![Connected Velocity Graph](./images/connected_graph.png)
+<img src="images/connected_graph.png" alt="Connected Velocity Graph" height=160/>
+
+<sub><sup>okay maybe my graph consistancy is trash, what can I do...</sup></sub>
+
+These are what they would look like with forwards-and-back animations. A forwards-than-forwards animation would look more like this, just for reference:
+
+<img src="images/forwards_forwards_graph.png" alt="Forwards ForwardsGraph" height=160/>
 
 To ask one of you to give these graphs as inputs, however, would be really dumb. So instead we define an intro function and its duration, which in the figure above is the `y=x` portion, an outro function and its duration, which is the `y=-x` portion, and the rest is filled with constant velocity. The area under the curve for this must be equal to the position for this to end up at the correct position (antiderivative of velocity is position). If we know the area under the curve for the intro and outro functions, the only component we need to ensure that the antiderivative is equal to the position would be the height of the graph. We find that with this formula:
 
