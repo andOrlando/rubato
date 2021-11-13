@@ -1,4 +1,4 @@
--- Kidna copying awesotre's stores on a surface level for added compaatibility
+-- Kidna copying awesotre's stores on a surface level for added compatibility
 local function subscribable(args)
 	local obj = args or {}
 	local subscribed = {}

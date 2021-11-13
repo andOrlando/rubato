@@ -46,6 +46,7 @@ We then simulate the antiderivative by adding `v(t)` (or the y-value at time `t`
 There are two main small issues that I can’t/don’t know how to fix mathematically:
 - It’s not perfectly accurate (it is perfectly accurate as `dt` goes to zero) which I don’t think is possible to fix unless I stop simulating the antiderivative and actually calc out the function, which seems time inefficient
 - When going from a positive m to a negative m, or in other words going backwards after going forwards in the animation, it will always undershoot by some value. I don’t know what that value is, I don’t know where it comes from, I don’t know how to fix it except for lots and lots of time-consuming testing, but it’s there. To compensate for this, whenever there’s a situation in which this will happen, I simulate the animation beforehand and multiply the entire animation by a corrective coefficient to make it do what I want
+- Awesome is kinda slow at redrawing imaages, so 60 redraws per second is realistically probably not going to happen. If you were to, for example, set the redraws per second to 500 or some arbitrarily large value, if I did nothing to dt, it would take forever to complete an animaiton. So since I can't fix awesome, I just (by default but this is optional) limit the rate based on the time it takes for awesome to render the first frame of the animation (Thanks Kasper for pointing this out and showing me a solution).
 
 So that’s how it works. I’d love any contributions anyone’s willing to give. I also have plans to create an interpolator without a set duration called `target` as opposed to `timed` when I have the time (or need it for my rice).
 
@@ -129,8 +130,7 @@ Arguments (in the form of a table):
  - `pos`: the initial position of the animation (def. `0`)
  - `intro`: the duration of the intro
  - `outro`: the duration of the outro (def. same as `intro`\*)
- - `inter`: the duration of the between-animation time (def. same as `intro`)
- - `prop_intro`: When `true`, `intro`, `outro` and `inter` represent proportional
+ - `prop_intro`: when `true`, `intro`, `outro` and `inter` represent proportional
    values; 0.5 would be half the duration. (def. `false`)
  - `easing`: the easing table (def. `interpolate.linear`)
  - `easing_outro`: the outro easing table (def. as `easing`)
@@ -142,7 +142,12 @@ Arguments (in the form of a table):
    when `dx` and `b` have opposite signs at the cost of having to do a little
    more work (and making my hard work on finding the formula for `m` worthless 
    :slightly_frowning_face:) (def. `false`)
- - `awestore_compat`: Make api even *more* similar to awestore's (def. `false`)
+ - `override_dt`: will cap rate to the fastest that awesome can possibly handle.
+   This may result in frame-skipping. By setting it to false, it may make 
+   animations slower (def. `true`)
+ - `awestore_compat`: make api even *more* similar to awestore's (def. `false`)
+ - `log`: it would print additional logs, but there aren't any logs to print right
+   now so it kinda just sits there (def. `false`)
 
 All of these values (except awestore_compat and subscribed) are mutable and changing them will
 change how the animation looks. I do not suggest changing `pos`, however, unless you change the
@@ -158,6 +163,7 @@ Useful properties:
 Methods are as follows:
  - `timed:subscribe(func)`: subscribe a function to be ran every refresh of the animation
  - `timed:unsubscribe(func)`: unsubscribe a function
+ - `timed:fire()`: run all subscribed functions at current position
  - `timed:abort()`: stop the animation
  - `timed:restart()`: restart the animaiton from it's approximate initial state (if a value is 
  changed during the animation it will remain changed after calling restart)
@@ -172,15 +178,22 @@ Awestore compatibility properties:
  - `timed.started`: subscribable table which is called when the animation starts or is interrupted
    + `timed.started:subscribe(func)`: subscribes a function
    + `timed.started:unsubscribe(func)`: unsubscribes a function
+   + `timed.started:fire()`: runs all subscribed functions
  - `timed.ended`: subscribable table which is called when the animation ends
    + `timed.ended:subscribe(func)`: subscribes a function
    + `timed.ended:unsubscribe(func)`: unsubscribes a function
+   + `timed.ended:fire()`: runs all subscribed functions
 
 **builtin easing functions**
  - `easing.zero`: linear easing, zero slope
  - `easing.linear`: linear slope, quadratic easing
  - `easing.quadratic`: quadratic slope, cubic easing
  - `easing.bouncy`: the bouncy thing as shown in the example
+
+**functions for setting default values**
+ - `rubato.set_def_rate(rate)`: set default rate for all interpolators, takes an `int`
+ - `rubato.set_override_dt(value))`: set default for override_dt for all interpolators, takes a
+ `bool`
 
 <h1 id="easing">Custom Easing Functions</h1>
 
@@ -265,13 +278,10 @@ bouncy = {
 	F = (20 * math.pi - (10 * math.log(2) - 2049) * math.sqrt(3)) / 
 		(20 * math.pi - 20490 * math.sqrt(3) * math.log(2)),
 	easing = function(t)
-		--short circuit
-		if t == 0 then return 0 end
-		if t == 1 then return 1 end
-
 		--both of these values are reused
 		local c1 = (20 * t * math.pi) / 3 - cs.c5
 		local c2 = math.pow(2, 10 * t + 1) --in the 2^{10x+2} I factored out the 2 to calculate this once
+
 		return (cs.c1 + cs.c2 * c2 * math.cos(c1) + cs.c3 * c2 * math.sin(c1)) / cs.c4
 	end
 }
@@ -335,6 +345,8 @@ about in the first place. Plus, it'll be the first of my projects without garbag
  - [x] improve intro and outro arguments (asserts, default values, proportional intros/outros)
  - [x] get a better name... (I have a cool name now!)
  - [x] make readme cooler
- - [X] have better documentation and add to luarocks
+ - [x] have better documentation and add to luarocks
  - [ ] remove gears dependency 
  - [ ] only apply corrective coefficient to plateau
+ - [ ] Do `prop_intro` more intelligently so it doesn't have to do so many comparisons
+ - [ ] Make things like `abort` more useful

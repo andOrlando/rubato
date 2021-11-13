@@ -74,23 +74,9 @@ local function simulate_easing(pos, duration, intro, intro_e, outro, outro_e, m,
 end
 
 --- INTERPOLATE. bam. it still ends in a period. But this one is timed.
--- @field duration the length of the animation (1)
--- @field rate how many times per second the aniamtion refrehses (32)
--- @field pos initial position of the animation (0)
--- @field intro duration of intro (0.2)
--- @field outro duration of outro (same as intro)
--- @field inter duration of intermittent time (same as intro)
--- @field easing easing method (linear)
--- @field easing_outro easing method for outro (same as easing)
--- @field easing_inter intermittent easing method (same as easing)
--- @field subscribed an initial function to subscribe (nil)
--- @field prop_intro whether or not the durations given from intro, outro and inter are proportional (false)
--- @field awestore_compat if true, increase awestore compatibility (false)
--- @field rapid_set if true, allow for setting the target multiple times (same as awestore_compat)
--- @return timed interpolator
--- @method timed:subscribe(func) subscribe a function to the timer refresh
--- @method timed:update_rate(rate_new) please use this function instead of manually updating rate
--- @method timed:set(target_new) set the target value for pos to end at
+-- So documentation isn't super necessary here since it's all on the README and idk how to do
+-- documentation correctly, so please see the README or read the code to better understand how
+-- it works
 local function timed(args)
 
 	local obj = subscribable()
@@ -119,15 +105,19 @@ local function timed(args)
 	obj.easing_outro = args.easing_outro or obj.easing
 	obj.easing_inter = args.easing_inter or obj.easing
 
-	obj.override_simulate = args.override_simulate or true
-
+	--dev interface changes
 	obj.log = args.log or false
 	obj.awestore_compat = args.awestore_compat or false
+
+	--animation logic changes
+	obj.override_simulate = args.override_simulate or true
 	obj.rapid_set = args.rapid_set ~= nil and args.rapid_set or obj.awestore_compat
+
+	obj.rate = args.rate or RUBATO_DEF_RATE or 30
+	obj.override_dt = args.override_dt or RUBATO_OVERRIDE_DT or true
 
 	-- hidden properties
 	obj._props = {
-		rate = args.rate or RUBATO_DEF_RATE or 30,
 		target = obj.pos
 	}
 
@@ -147,20 +137,34 @@ local function timed(args)
 	--TODO: fix double pos thing
 	-- Variables used in calculation
 	local time = 0
-	--local target
-	local dt = 1 / obj._props.rate
+	local dt = 1 / obj.rate
 	local dx = 0
 	local m
 	local b
-	local is_inter --whether or not it's intermittente
+	local is_inter --whether or not it's in an intermittent state
+
+	local dt_correct = not obj.override_dt
+	local last_frame_time = 0 --the time before the last frame
 
 	-- Variables used in simulation
 	local ps_pos
 	local coef
 
 
-	local timer = gears.timer { timeout = dt }
+	-- The timer that does all the animating
+	local timer = gears.timer()
 	timer:connect_signal("timeout", function()
+
+		-- Find the correct dt if it's not already correct
+		if (not dt_correct) then
+
+			last_frame_time = last_frame_time ~= 0 and os.clock() or last_frame_time - os.clock()
+
+			if (last_frame_time ~= 0) then
+				timer.timeout = last_frame_time
+				dt_correct = true
+			end
+		end
 
 		--increment time
 		time = time + dt
@@ -172,8 +176,6 @@ local function timed(args)
 			obj.outro * (obj.prop_intro and obj.duration or 1),
 			obj.easing_outro.easing,
 			m, b)
-
-
 
 		--increment pos by dx
 		--scale by dt and correct with coef if necessary
@@ -205,9 +207,16 @@ local function timed(args)
 		--disallow setting it twice (because it makes it go wonky)
 		if not obj.rapid_set and obj._props.target == target_new then return end
 
+		--animation values
 		obj._props.target = target_new	--sets target
 		time = 0			--resets time
 		coef = 1			--resets coefficient
+
+		--rate stuff
+		dt = 1 / obj.rate
+		last_frame_time = 0
+		dt_correct = not obj.override_dt
+		timer.timeout = dt
 
 		-- does annoying awestore compatibility
 		if obj.awestore_compat then
@@ -215,11 +224,12 @@ local function timed(args)
 			obj.started:fire(obj.pos, time, dx)
 		end
 
-
 		is_inter = timer.started
 
-
+		--set initial position if interrupting another animation
 		b = timer.started and dx or 0
+
+		--get the slope of the plateau
 		m = get_slope((is_inter and obj.inter or obj.intro) * (obj.prop_intro and obj.duration or 1),
 			obj.outro * (obj.prop_intro and obj.duration or 1),
 			obj.duration,
@@ -228,6 +238,7 @@ local function timed(args)
 			obj.easing_outro.F,
 			b)
 
+		--if it will make a mistake (or override_simulate is true), fix it
 		if obj.override_simulate or b / math.abs(b) ~= m / math.abs(m) then
 			ps_pos = simulate_easing(obj.pos, obj.duration,
 				(is_inter and obj.inter or obj.intro) * (obj.prop_intro and obj.duration or 1),
@@ -258,6 +269,9 @@ local function timed(args)
 		b = nil
 		is_inter = false
 		coef = 1
+		dt = 1 / obj.rate
+		dt_correct = not obj.dt_overridden
+		timer.timeout = dt
 	end
 
 	-- Effectively pauses the timer
@@ -284,13 +298,8 @@ local function timed(args)
 		else return rawget(self, key) end
 	end
 	function mt:__newindex(key, value)
-		-- Rate must update both dt and timeout
-		if key == "rate" then
-			dt = 1 / value
-			timer.timeout = dt
-
 		-- Don't allow for setting state
-		elseif key == "state" then return
+		if key == "state" then return
 
 		-- Changing target should call set
 		elseif key == "target" then set(value) --set target
