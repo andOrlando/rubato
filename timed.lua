@@ -143,8 +143,8 @@ local function timed(args)
 	local b
 	local is_inter --whether or not it's in an intermittent state
 
-	local dt_correct = not obj.override_dt
 	local last_frame_time = 0 --the time before the last frame
+	local raw_dt = dt
 
 	-- Variables used in simulation
 	local ps_pos
@@ -156,14 +156,13 @@ local function timed(args)
 	timer:connect_signal("timeout", function()
 
 		-- Find the correct dt if it's not already correct
-		if (not dt_correct) then
+		if (obj.override_dt) then
+			dt = os.clock() - last_frame_time
 
-			last_frame_time = last_frame_time ~= 0 and os.clock() or last_frame_time - os.clock()
+			if (raw_dt < dt) then timer.timeout = dt
+			else dt = raw_dt end
 
-			if (last_frame_time ~= 0) then
-				timer.timeout = last_frame_time
-				dt_correct = true
-			end
+			last_frame_time = os.clock()
 		end
 
 		--increment time
@@ -214,8 +213,8 @@ local function timed(args)
 
 		--rate stuff
 		dt = 1 / obj.rate
-		last_frame_time = 0
-		dt_correct = not obj.override_dt
+		raw_dt = dt
+		last_frame_time = os.clock()
 		timer.timeout = dt
 
 		-- does annoying awestore compatibility
@@ -270,7 +269,6 @@ local function timed(args)
 		is_inter = false
 		coef = 1
 		dt = 1 / obj.rate
-		dt_correct = not obj.dt_overridden
 		timer.timeout = dt
 	end
 
