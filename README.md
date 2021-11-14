@@ -57,9 +57,9 @@ execute, and then run it by updating `target`! In practice it'd look like this:
 
 ```lua
 timed = rubato.timed {
-	intro = 0.1,
-	duration = 0.5,
-	subscribed = function(pos) print(pos) end
+    intro = 0.1,
+    duration = 0.5,
+    subscribed = function(pos) print(pos) end
 }
 
 --you can also achieve the same effect as the `subscribed` parameter with this:
@@ -82,8 +82,8 @@ So how do the animations actually look? Let’s check out what I (at one point) 
 
 ```lua
 timed = rubato.timed {
-	intro = 0.1,
-	duration = 0.3
+    intro = 0.1,
+    duration = 0.3
 }
 ```
 
@@ -93,9 +93,9 @@ The above is very subtly eased. A somewhat more pronounced easing would look mor
 
 ```lua
 timed = rubato.timed {
-	intro = 0.5,
-	duration = 1,
-	easing = rubato.quadratic --quadratic slope, not easing
+    intro = 0.5,
+    duration = 1,
+    easing = rubato.quadratic --quadratic slope, not easing
 }
 ```
 
@@ -267,30 +267,30 @@ decently less accurate and substantially more complicated.
 ```lua
 --all the constants are calculated only once
 local cs = {
-	c1 = 6 * math.pi - 3 * math.sqrt(3) * math.log(2),
-	c2 = math.sqrt(3) * math.pi,
-	c3 = 6 * math.sqrt(3) * math.log(2),
-	c4 = 6 * math.pi - 6147 * math.sqrt(3) * math.log(2),
-	c5 = 46 * math.pi / 6
+    c1 = 6 * math.pi - 3 * math.sqrt(3) * math.log(2),
+    c2 = math.sqrt(3) * math.pi,
+    c3 = 6 * math.sqrt(3) * math.log(2),
+    c4 = 6 * math.pi - 6147 * math.sqrt(3) * math.log(2),
+    c5 = 46 * math.pi / 6
 }
 
 bouncy = {
-	F = (20 * math.pi - (10 * math.log(2) - 2049) * math.sqrt(3)) / 
-		(20 * math.pi - 20490 * math.sqrt(3) * math.log(2)),
-	easing = function(t)
-		--both of these values are reused
-		local c1 = (20 * t * math.pi) / 3 - cs.c5
-		local c2 = math.pow(2, 10 * t + 1) --in the 2^{10x+2} I factored out the 2 to calculate this once
+    F = (20 * math.pi - (10 * math.log(2) - 2049) * math.sqrt(3)) / 
+        (20 * math.pi - 20490 * math.sqrt(3) * math.log(2)),
+    easing = function(t)
+        --both of these values are reused
+        local c1 = (20 * t * math.pi) / 3 - cs.c5
+        local c2 = math.pow(2, 10 * t + 1) --in the 2^{10x+2} I factored out the 2 to calculate this once
 
-		return (cs.c1 + cs.c2 * c2 * math.cos(c1) + cs.c3 * c2 * math.sin(c1)) / cs.c4
-	end
+        return (cs.c1 + cs.c2 * c2 * math.cos(c1) + cs.c3 * c2 * math.sin(c1)) / cs.c4
+    end
 }
 
 timed = rubato.timed {
-	intro = 0, --we'll use this as an outro, since it's weird as an intro
-	outro = 0.7,
-	duration = 1,
-	easing = bouncy
+    intro = 0, --we'll use this as an outro, since it's weird as an intro
+    outro = 0.7,
+    duration = 1,
+    easing = bouncy
 }
 ```
 
