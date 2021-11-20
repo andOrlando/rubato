@@ -1,7 +1,7 @@
 # rubato
 
 - [Background and explanation](#background)
-- [How to actually use it](#useage)
+- [How to actually use it](#usage)
 - [But why though?](#why)
 - [Arguments and Methods](#arguments-methods)
 - [Custom Easing Functions](#easing)
