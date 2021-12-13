@@ -44,11 +44,12 @@ local function simulate_easing(pos, duration, intro, intro_e, outro, outro_e, m,
 	local ps_pos = pos
 	local dx
 
+
 	-- Key for cacheing results
-	local key = string.format("%f %f %f %s %f %s %s %s",
+	local key = string.format("%f %f %f %s %f %s %f %f",
 		pos, duration,
-		intro, intro_e,
-		outro, outro_e,
+		intro, tostring(intro_e),
+		outro, tostring(outro_e),
 		m, b)
 
 	-- Short circuits if it's already done the calculation
@@ -110,7 +111,7 @@ local function timed(args)
 	obj.awestore_compat = args.awestore_compat or false
 
 	--animation logic changes
-	obj.override_simulate = args.override_simulate or true
+	obj.override_simulate = args.override_simulate or false
 	obj.rapid_set = args.rapid_set ~= nil and args.rapid_set or obj.awestore_compat
 
 	obj.rate = args.rate or RUBATO_DEF_RATE or 30
@@ -238,7 +239,7 @@ local function timed(args)
 			b)
 
 		--if it will make a mistake (or override_simulate is true), fix it
-		if obj.override_simulate or b / math.abs(b) ~= m / math.abs(m) then
+		if obj.override_simulate or (b ~= 0 and b / math.abs(b) ~= m / math.abs(m)) then
 			ps_pos = simulate_easing(obj.pos, obj.duration,
 				(is_inter and obj.inter or obj.intro) * (obj.prop_intro and obj.duration or 1),
 				is_inter and obj.easing_inter.easing or obj.easing.easing,
