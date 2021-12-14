@@ -220,6 +220,7 @@ in elastic."
 For quadratic we already know the function: `y=x^2`. I don't even need to use latex it's that easy.
 
 For ease in elastic, we use the function given [here](https://easings.net/#easeInElastic): 
+
 <img src="https://render.githubusercontent.com/render/math?math=\color{blue}f(x)=-2^{10 \, x - 10}\times \sin\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right))">
 
 3. Take the derivative 
@@ -238,6 +239,7 @@ right up. `%display latex` in jupiter makes it look pretty, whereas `%display as
 it look *presentable* in tui sagemath.
 
 The derivative (via sagemath) is as follows:  
+
 <img src="https://render.githubusercontent.com/render/math?math=\color{blue}f^\prime (x)=-\frac{20}{3} \, \pi 2^{10 \, x - 10} \cos\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right) - 10 \cdot 2^{10 \, x - 10} \log\left(2\right) \sin\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right)">
 
 4. Double check that `f'(0)=0`
@@ -245,6 +247,7 @@ The derivative (via sagemath) is as follows:
 Quadratic: `2*0 = 0` so we're good
 
 Ease in elastic not so much, however:
+
 <img src="https://render.githubusercontent.com/render/math?math=\color{blue}f^\prime (0)=\frac{5}{1536} \, \sqrt{3} \pi - \frac{5}{1024} \, \log\left(2\right)">
 We'll subtract this value from `f(x)` so that our new `f(x)`, let's say `f_2(x)` has a point at 
 (0, 0).
@@ -262,9 +265,11 @@ f(1)=2, f(x)/f(1) = 2x / 2 = x, f_e(x)=x
 Easy as that!
 
 Or so you thought. Now let's check the same for ease in elastic:
+
 <img src="https://render.githubusercontent.com/render/math?math=\color{blue}f_2(1)=-\frac{5}{1536} \, \sqrt{3} \pi %2B \frac{10245}{1024} \, \log\left(2\right)">
 
 Hence the need for sagemath. Once we divide the two we get our final easing function, this:
+
 <img src="https://render.githubusercontent.com/render/math?math=\color{blue}f_e(x)=\frac{4096 \, \pi 2^{10 \, x - 10} \cos\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right) %2B 6144 \cdot 2^{10 \, x - 10} \log\left(2\right) \sin\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right) %2B 2 \, \sqrt{3} \pi - 3 \, \log\left(2\right)}{2 \, \sqrt{3} \pi - 6147 \, \log\left(2\right)}">
 
 What on god's green earth is that. Well whatever, at least it works (?).
@@ -274,7 +279,8 @@ What on god's green earth is that. Well whatever, at least it works (?).
 For `f(x)=x` we can do that in our heads, it's just `1/2`.
 
 For ease in elastic not so much. You can do this with sagemath and eventually get this:
-<img src="https://render.githubusercontent.com/render/math?math=\frac{20 \, \sqrt{3} \pi - 30 \, \log\left(2\right) - 6147}{10 \, {\left(2 \, \sqrt{3} \pi - 6147 \, \log\left(2\right)\right)}}">
+
+<img src="https://render.githubusercontent.com/render/math?math=\color{blue}\frac{20 \, \sqrt{3} \pi - 30 \, \log\left(2\right) - 6147}{10 \, {\left(2 \, \sqrt{3} \pi - 6147 \, \log\left(2\right)\right)}}">
 
 So this all looked pretty daunting probably, and to be honest it took me hours of either not using
 sage (I tried with wolfram alpha for a good hour) or using sage incorrectly (it took three months
