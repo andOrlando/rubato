@@ -116,6 +116,7 @@ local function timed(args)
 
 	obj.rate = args.rate or RUBATO_DEF_RATE or 30
 	obj.override_dt = args.override_dt or RUBATO_OVERRIDE_DT or true
+	obj.instant = args.instant or RUBATO_INSTANT or false
 
 	-- hidden properties
 	obj._props = {
@@ -203,6 +204,12 @@ local function timed(args)
 
 	-- Set target and begin interpolation
 	local function set(target_new)
+		if obj.instant then
+			obj.pos = target_new
+			obj:fire(obj.pos, 0, 0)
+			if obj.awestore_compat then obj.ended:fire(obj.pos, time, dx) end
+			return
+		end
 
 		--disallow setting it twice (because it makes it go wonky)
 		if not obj.rapid_set and obj._props.target == target_new then return end
