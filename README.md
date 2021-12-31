@@ -395,3 +395,5 @@ about in the first place. Plus, it'll be the first of my projects without garbag
  - [ ] only apply corrective coefficient to plateau
  - [ ] Do `prop_intro` more intelligently so it doesn't have to do so many comparisons
  - [ ] Make things like `abort` more useful
+ - [ ] Merge that pr by @Kasper so instant works
+ - [ ] Add a manager (this proceeds the above todo thing)
