@@ -114,8 +114,8 @@ local function timed(args)
 	obj.override_simulate = args.override_simulate or false
 	obj.rapid_set = args.rapid_set ~= nil and args.rapid_set or obj.awestore_compat
 
-	obj.rate = args.rate or RUBATO_DEF_RATE or 30
-	obj.override_dt = args.override_dt or RUBATO_OVERRIDE_DT or true
+	obj.rate = args.rate or RUBATO_DEF_RATE
+	obj.override_dt = args.override_dt == nil and RUBATO_OVERRIDE_DT or false
 
 	-- hidden properties
 	obj._props = {
@@ -145,7 +145,7 @@ local function timed(args)
 	local is_inter --whether or not it's in an intermittent state
 
 	local last_frame_time = 0 --the time before the last frame
-	local raw_dt = dt
+	local frame_time = dt --time it takes for the current frame (placeholder)
 
 	-- Variables used in simulation
 	local ps_pos
@@ -158,10 +158,10 @@ local function timed(args)
 
 		-- Find the correct dt if it's not already correct
 		if (obj.override_dt) then
-			dt = os.clock() - last_frame_time
+			frame_time = os.clock() - last_frame_time
 
-			if (raw_dt < dt) then timer.timeout = dt
-			else dt = raw_dt end
+			if (frame_time > dt) then dt, timer.timeout = frame_time, frame_time
+			elseif timer.timeout ~= dt then timer.timeout = dt end
 
 			last_frame_time = os.clock()
 		end
@@ -214,7 +214,7 @@ local function timed(args)
 
 		--rate stuff
 		dt = 1 / obj.rate
-		raw_dt = dt
+		frame_time = dt
 		last_frame_time = os.clock()
 		timer.timeout = dt
 
