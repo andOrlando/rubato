@@ -204,6 +204,10 @@ local function timed(args)
 
 	-- Set target and begin interpolation
 	local function set(target_new)
+		obj.rate = args.rate or RUBATO_DEF_RATE or 30
+		obj.override_dt = args.override_dt or RUBATO_OVERRIDE_DT or true
+		obj.instant = args.instant or RUBATO_INSTANT or false
+
 		if obj.instant then
 			obj.pos = target_new
 			obj:fire(obj.pos, 0, 0)
