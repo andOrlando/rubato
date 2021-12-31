@@ -144,7 +144,7 @@ local function timed(args)
 	local b
 	local is_inter --whether or not it's in an intermittent state
 
-	local last_frame_time = 0 --the time before the last frame
+	local last_frame_time --the time before the last frame
 	local frame_time = dt --time it takes for the current frame (placeholder)
 
 	-- Variables used in simulation
@@ -157,14 +157,16 @@ local function timed(args)
 	timer:connect_signal("timeout", function()
 
 		-- Find the correct dt if it's not already correct
-		if (obj.override_dt) then
+		if (obj.override_dt and last_frame_time) then
+
 			frame_time = os.clock() - last_frame_time
 
 			if (frame_time > dt) then dt, timer.timeout = frame_time, frame_time
 			elseif timer.timeout ~= dt then timer.timeout = dt end
 
 			last_frame_time = os.clock()
-		end
+
+		elseif (obj.override_dt) then last_frame_time = os.clock() end
 
 		--increment time
 		time = time + dt
@@ -215,7 +217,7 @@ local function timed(args)
 		--rate stuff
 		dt = 1 / obj.rate
 		frame_time = dt
-		last_frame_time = os.clock()
+		last_frame_time = nil
 		timer.timeout = dt
 
 		-- does annoying awestore compatibility
