@@ -82,47 +82,50 @@ local function timed(args)
 
 	local obj = subscribable()
 
-	--set up default arguments
-	obj.duration = args.duration or 1
-	obj.pos = args.pos or 0
+	function obj:reset_values()
+		--set up default arguments
+		self.duration = args.duration or RUBATO_MANAGER.timed.defaults.duration
+		self.pos = args.pos or RUBATO_MANAGER.timed.defaults.pos
 
-	obj.prop_intro = args.prop_intro or false
+		self.prop_intro = args.prop_intro or RUBATO_MANAGER.timed.defaults.prop_intro
 
-	obj.intro = args.intro or 0.2
-	obj.inter = args.inter or args.intro
+		self.intro = args.intro or RUBATO_MANAGER.timed.defaults.intro
+		self.inter = args.inter or args.intro
 
-	--set args.outro nicely based off how large args.intro is
-	if obj.intro > (obj.prop_intro and 0.5 or obj.duration) and not args.outro then
-		obj.outro = math.max((args.prop_intro and 1 or args.duration - args.intro), 0)
+		--set args.outro nicely based off how large args.intro is
+		if self.intro > (self.prop_intro and 0.5 or self.duration) and not args.outro then
+			self.outro = math.max((args.prop_intro and 1 or args.duration - args.intro), 0)
 
-	elseif not args.outro then obj.outro = obj.intro
-	else obj.outro = args.outro end
+		elseif not args.outro then self.outro = self.intro
+		else self.outro = args.outro end
 
-	--assert that these values are valid
-	assert(obj.intro + obj.outro <= obj.duration or obj.prop_intro, "Intro and Outro must be less than or equal to total duration")
-	assert(obj.intro + obj.outro <= 1 or not obj.prop_intro, "Proportional Intro and Outro must be less than or equal to 1")
+		--assert that these values are valid
+		assert(self.intro + self.outro <= self.duration or self.prop_intro, "Intro and Outro must be less than or equal to total duration")
+		assert(self.intro + self.outro <= 1 or not self.prop_intro, "Proportional Intro and Outro must be less than or equal to 1")
 
-	obj.easing = args.easing or easing.linear
-	obj.easing_outro = args.easing_outro or obj.easing
-	obj.easing_inter = args.easing_inter or obj.easing
+		self.easing = args.easing or easing.linearRUBATO_MANAGER.timed.defaults.duration
+		self.easing_outro = args.easing_outro or self.easing
+		self.easing_inter = args.easing_inter or self.easing
 
-	--dev interface changes
-	obj.log = args.log or function() end
-	obj.awestore_compat = args.awestore_compat or false
+		--dev interface changes
+		self.log = args.log or RUBATO_MANAGER.timed.defaults.log
+		self.awestore_compat = args.awestore_compat or RUBATO_MANAGER.timed.defaults.awestore_compat
 
-	--animation logic changes
-	obj.override_simulate = args.override_simulate or false
-	--[[ rapid_set is allowed by awestore but I don't like it, so it's bound to awestore_compat if not explicitly set
-	override_dt doesn't work well with big animations or scratchpads (blame awesome not me) (probably) so that too is
-	is tied to awestore_compat if not explicitly set, then to the default value ]]
-	obj.rapid_set = args.rapid_set == nil and obj.awestore_compat or args.rapid_set
-	obj.override_dt = args.override_dt == nil and (not obj.awestore_compat and RUBATO_OVERRIDE_DT) or args.override_dt
+		--animation logic changes
+		self.override_simulate = args.override_simulate or RUBATO_MANAGER.timed.defaults.override_simulate
+		--[[ rapid_set is allowed by awestore but I don't like it, so it's bound to awestore_compat if not explicitly set
+		override_dt doesn't work well with big animations or scratchpads (blame awesome not me) (probably) so that too is
+		is tied to awestore_compat if not explicitly set, then to the default value ]]
+		self.rapid_set = args.rapid_set == nil and self.awestore_compat or args.rapid_set
+		self.override_dt = args.override_dt == nil and (not self.awestore_compat and RUBATO_MANAGER.timed.defaults.override_dt) or args.override_dt
 
-	-- hidden properties
-	obj._props = {
-		target = obj.pos,
-		rate = args.rate or RUBATO_DEF_RATE
-	}
+		-- hidden properties
+		self._props = {
+			target = self.pos,
+			rate = args.rate or RUBATO_MANAGER.timed.defaults.rate
+		}
+	end
+	obj:reset_values()
 
 	-- awestore compatibility
 	if obj.awestore_compat then

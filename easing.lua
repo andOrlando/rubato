@@ -16,15 +16,6 @@ local quadratic = {
 	easing = function(t) return t * t end
 }
 
---bouncy constants
-local b_cs = {
-	c1 = 6 * math.pi - 3 * math.sqrt(3) * math.log(2),
-	c2 = math.sqrt(3) * math.pi,
-	c3 = 6 * math.sqrt(3) * math.log(2),
-	c4 = 6 * math.pi - 6147 * math.sqrt(3) * math.log(2),
-	c5 = 46 * math.pi / 6
-}
-
 -- Okay look. It works. It's not terribly slow because computers can do math
 -- quick. The other one decidedly does not work (thanks sagemath, I trusted
 -- you...) so this will have to do. I may try to fix it up at some point, I may
