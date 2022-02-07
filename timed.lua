@@ -103,7 +103,7 @@ local function timed(args)
 		assert(self.intro + self.outro <= self.duration or self.prop_intro, "Intro and Outro must be less than or equal to total duration")
 		assert(self.intro + self.outro <= 1 or not self.prop_intro, "Proportional Intro and Outro must be less than or equal to 1")
 
-		self.easing = args.easing or easing.linearRUBATO_MANAGER.timed.defaults.duration
+		self.easing = args.easing or RUBATO_MANAGER.timed.defaults.easing
 		self.easing_outro = args.easing_outro or self.easing
 		self.easing_inter = args.easing_inter or self.easing
 

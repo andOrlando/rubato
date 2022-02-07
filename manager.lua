@@ -35,12 +35,12 @@ local function manager()
 		pos = 0,
 		prop_intro = false,
 		intro = 0.2,
-		intro_easing = easing.linear,
+		easing = easing.linear,
 		awestore_compat = false,
 		log = function() end,
 		override_simulate = false,
 		override_dt = false,
-		rate = 30,
+		rate = 60,
 	}
 	make_props_immutable(obj.timed)
 	obj._props.timed._props.override = {_props = {
