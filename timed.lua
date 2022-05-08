@@ -195,10 +195,10 @@ local function timed(args)
 			timer:stop()	 --stops itself
 
 			--run subscribed in functions
-			obj:fire(obj.pos, time, dx)
+			obj:fire(obj.pos, obj.duration, dx)
 
 			-- awestore compatibility...
-			if obj.awestore_compat then obj.ended:fire(obj.pos, time, dx) end
+			if obj.awestore_compat then obj.ended:fire(obj.pos, obj.duration, dx) end
 
 		--otherwise it just fires normally
 		else obj:fire(obj.pos, time, dx) end
