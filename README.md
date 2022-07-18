@@ -107,15 +107,11 @@ The first animation’s velocity graph looks like a trapezoid, while the second 
 
 <h1 id="why">But why though?</h1>
 
-Why go through all this hassle? Why not just use awestore? That's a good question and to be fair you
-can use whatever interpolator you so choose. That being said, rubato is solely focused on animation, has mathematically perfect interruptions and I’ve been told it also looks smoother.
+Why go through all this hassle? Why not just use awestore? That's a good question and to be fair you can use whatever interpolator you so choose. That being said, rubato is solely focused on animation, has mathematically perfect interruptions and I’ve been told it also looks smoother.
 
-Furthermore, if you use rubato, you get to brag about how annoying it was to set up a monstrous
-derivative just to write a custom easing function, like the one shown in [Custom Easing
-Function](#easing)'s example. That's a benefit, not a downside, I promise.
+Furthermore, if you use rubato, you get to brag about how annoying it was to set up a monstrous derivative just to write a custom easing function, like the one shown in [Custom Easing Function](#easing)'s example. That's a benefit, not a downside, I promise.
 
-Also maybe hopefully the code should be almost digestible kinda maybe. I tried my best to comment
-and documentate, but I actually have no idea how to do lua docs or anything.
+Also maybe hopefully the code should be almost digestible kinda maybe. I tried my best to comment and documentate, but I actually have no idea how to do lua docs or anything.
 
 Also it has a cooler name
 
@@ -125,52 +121,41 @@ Also it has a cooler name
 
 Arguments (in the form of a table):
  - `duration`: the total duration of the animation
- - `rate`: the number of times per second the timer executes. Higher rates mean
-   smoother animations and less error.
+ - `rate`: the number of times per second the timer executes. Higher rates mean smoother animations and less error.
+ - `prop_intro`: when `true`, `intro`, `outro` and `inter` represent proportional values; 0.5 would be half the duration. (def. `false`)
  - `pos`: the initial position of the animation (def. `0`)
  - `intro`: the duration of the intro
  - `outro`: the duration of the outro (def. same as `intro`\*)
- - `prop_intro`: when `true`, `intro`, `outro` and `inter` represent proportional
-   values; 0.5 would be half the duration. (def. `false`)
+ - inter: the duration of intermittent animations (def. same as `intro`\*)
  - `easing`: the easing table (def. `interpolate.linear`)
  - `easing_outro`: the outro easing table (def. as `easing`)
- - `easing_inter`: the "intermittent" easing function, which defines which
-   easing to use in the case of animation interruptions (def. same as
-   `easing`)
+ - `easing_inter`: the "intermittent" easing table, which defines which easing to use in the case of animation interruptions (def. same as `easing`)
  - `subscribed`: a function to subscribe at initialization (def. `nil`)
- - `override_simulate`: when `true`, will simulate everything instead of just
-   when `dx` and `b` have opposite signs at the cost of having to do a little
-   more work (and making my hard work on finding the formula for `m` worthless 
-   :slightly_frowning_face:) (def. `false`)
- - `override_dt`: will cap rate to the fastest that awesome can possibly handle.
-   This may result in frame-skipping. By setting it to false, it may make 
-   animations slower (def. `true`)
+ - `override_simulate`: when `true`, will simulate everything instead of just when `dx` and `b` have opposite signs at the cost of having to do a little more work (and making my hard work on finding the formula for `m` worthless :slightly_frowning_face:) (def. `false`)
+ - `rapid_set`: 
+ - `override_dt`: will cap rate to the fastest that awesome can possibly handle. This may result in frame-skipping. By setting it to false, it may make animations slower (def. `true`)
  - `awestore_compat`: make api even *more* similar to awestore's (def. `false`)
- - `log`: it would print additional logs, but there aren't any logs to print right
-   now so it kinda just sits there (def. `false`)
+ - `log`: it would print additional logs, but there aren't any logs to print right now so it kinda just sits there (def. `false`)
+ - `debug`: basically just tags the timed instance. I use it in tandem with manager.timed.override.forall
 
-All of these values (except awestore_compat and subscribed) are mutable and changing them will
-change how the animation looks. I do not suggest changing `pos`, however, unless you change the
-position of what's going to be animated in some other way
+All of these values (except awestore_compat and subscribed) are mutable and changing them will change how the animation looks. I do not suggest changing `pos`, however, unless you change the position of what's going to be animated in some other way
 
 \*with the caviat that if the outro being the same as the intro would result in an error, it would go
 for the largest allowable outro time. Ex: duration = 1, intro = 0.6, then outro will default to 0.4.
 
-Useful properties:
+Properties:
  - `target`: when set, sets the target and starts the animation, otherwise returns the target
+ - `pause`: if true, the timer will have its animation suspedned until set to false again
  - `state`: immutable, returns true if an animation is in progress
 
 Methods are as follows:
  - `timed:subscribe(func)`: subscribe a function to be ran every refresh of the animation
  - `timed:unsubscribe(func)`: unsubscribe a function
- - `timed:fire()`: run all subscribed functions at current position
- - `timed:abort()`: stop the animation
- - `timed:restart()`: restart the animaiton from it's approximate initial state (if a value is 
- changed during the animation it will remain changed after calling restart)
+ - `timed:fire()`: run all subscribed functions at current position (it doesn't provide arguments, which are typically position, current time and dx. You must provide those yourself if calling this)
+ - `timed:abort()`: stop the animation at the current position
 
 Awestore compatibility functions (`awestore_compat` must be true):
- - `timed:set(target_new)`: sets the position the animation should go to, effectively the same 
- as setting target
+ - `timed:set(target_new)`: sets the position the animation should go to, effectively the same as setting target
  - `timed:initial()`: returns the intiial position
  - `timed:last()`: returns the target position, effectively the same as `timed.target`
 
@@ -191,9 +176,15 @@ Awestore compatibility properties:
  - `easing.bouncy`: the bouncy thing as shown in the example
 
 **functions for setting default values**
- - `rubato.set_def_rate(rate)`: set default rate for all interpolators, takes an `int`
- - `rubato.set_override_dt(value))`: set default for override_dt for all interpolators, takes a
- `bool`
+ - (DEPRECIATED) `rubato.set_def_rate(rate)`: set default rate for all interpolators, takes an `int`
+ - (DEPRECIATED) `rubato.set_override_dt(value))`: set default for override_dt for all interpolators, takes a `bool`
+
+ **For rubato.manager**
+
+ - `manager.timed.default`: a table containing properties of timed objects as keys and their default values as values. Updating values in this table changes those defaults. Ex: `manager.timed.default.rate = 60` sets default rate to 60 fps
+ - `manager.timed.override`: a table with accessors which set properties of all tables. Updating values in this table changes the properties of all tables. Ex: `manager.timed.override.is_instant = true` makes all animations instantaneous globally
+ - `manager.timed.override.clear()`: resets all timeds to their initial values
+ - `manager.timed.override.forall(func)`: run some function for all timed objects. Parameter to function is a single timed object. Ex: `manager.timed.override.forall(function(timed) print(timed) end)` prints all timeds
 
 <h1 id="easing">Custom Easing Functions</h1>
 
@@ -391,9 +382,10 @@ about in the first place. Plus, it'll be the first of my projects without garbag
  - [x] get a better name... (I have a cool name now!)
  - [x] make readme cooler
  - [x] have better documentation and add to luarocks
- - [ ] remove gears dependency 
+ - [x] remove gears dependency 
  - [ ] only apply corrective coefficient to plateau
- - [ ] Do `prop_intro` more intelligently so it doesn't have to do so many comparisons
- - [ ] Make things like `abort` more useful
- - [ ] Merge that pr by @Kasper so instant works
- - [ ] Add a manager (this proceeds the above todo thing)
+ - [x] Do `prop_intro` more intelligently so it doesn't have to do so many comparisons (done maybe kinda?)
+ - [x] Make things like `abort` more useful
+ - [x] Merge that pr by @Kasper so instant works
+ - [x] Add a manager (this proceeds the above todo thing)
+ - [ ] Make forall more useable and add tags and stuff

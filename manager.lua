@@ -13,7 +13,7 @@ local function make_props_immutable(table)
 	setmetatable(table, {
 		__index = function(self, key)
 			if self._props[key] then return self._props[key]
-			else return self[key] end
+			else return rawget(self, key) end
 		end,
 		__newindex = function(self, key, value)
 			if self._props[key] then return
@@ -59,4 +59,4 @@ local function manager()
 	return obj
 end
 
-return manager()
+return RUBATO_MANAGER or manager()
