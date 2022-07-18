@@ -203,16 +203,16 @@ local function timed(args)
 	end
 
 	-- Variables used in calculation, defined once bcz less operations
-	obj._time = 0				   -- current time
+	obj._time = 0				  -- current time
 	obj._dt = 1 / obj._props.rate -- change in time
-	obj._dx = 0 				   -- value of slope at current time
-	obj._m = 0						   -- slope
-	obj._b = 0						   -- y-intercept
-	obj._is_inter = false				   --whether or not it's in an intermittent state
+	obj._dx = 0 				  -- value of slope at current time
+	obj._m = 0					  -- slope
+	obj._b = 0					  -- y-intercept
+	obj._is_inter = false		  --whether or not it's in an intermittent state
 
 	-- Variables used in simulation
-	obj._ps_pos = 0 -- pseudoposition
-	obj._coef = 1 -- corrective coefficient TODO: apply to plateau
+	obj._ps_pos = 0	-- pseudoposition
+	obj._coef = 1	-- corrective coefficient TODO: apply to plateau
 
 	-- Set target and begin interpolation
 	local function set(value)
