@@ -228,7 +228,7 @@ local function timed(args)
 		if not RUBATO_TIMEOUTS[obj.rate] then RUBATO_TIMEOUTS[obj.rate] = create_timeout(obj.rate) end
 		obj._dt = 1 / obj.rate
 
-		-- does annoying awestore compatibility
+		--does awestore compatibility
 		if obj.awestore_compat then
 			obj._last = value
 			obj.started:fire(obj.pos, obj._time, obj._dx)
@@ -265,8 +265,11 @@ local function timed(args)
 			if obj._coef ~= obj._coef then obj._coef = 1 end --check for div by 0 resulting in NaN
 		end
 
-		--finally set target, triggering timeout since pos != target
+		--set target, triggering timeout since pos != target
 		obj._props.target = value --sets target
+
+		--finally, fire it once with initial values 
+		obj:fire(obj.pos, obj._time, obj._dx)
 
 	end
 
