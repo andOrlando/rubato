@@ -146,7 +146,7 @@ for the largest allowable outro time. Ex: duration = 1, intro = 0.6, then outro 
 Properties:
  - `target`: when set, sets the target and starts the animation, otherwise returns the target
  - `pause`: if true, the timer will have its animation suspedned until set to false again
- - `state`: immutable, returns true if an animation is in progress
+ - `running`: immutable, returns true if an animation is in progress
 
 Methods are as follows:
  - `timed:subscribe(func)`: subscribe a function to be ran every refresh of the animation

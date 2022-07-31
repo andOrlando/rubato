@@ -295,9 +295,9 @@ local function timed(args)
 	local mt = {}
 	function mt:__index(key)
 		-- Returns the state value
-		if key == "state" then
+		if key == "running" then
 			if obj.pause then return false
-			else return obj._props.target == obj.pos end
+			else return obj._props.target ~= obj.pos end
 
 		-- If it's in _props return it from props
 		elseif self._props[key] then return self._props[key]
@@ -307,7 +307,7 @@ local function timed(args)
 	end
 	function mt:__newindex(key, value)
 		-- Don't allow for setting state
-		if key == "state" then return
+		if key == "running" then return
 
 		-- Changing target should call set
 		elseif key == "target" then set(value) --set target
