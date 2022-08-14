@@ -290,6 +290,9 @@ local function timed(args)
 		obj:fire(obj.pos, obj.time, obj._dx) --fire once to reset visually too
 	end
 
+	--override to allow calling fire with no arguments
+	function obj:fire(...) args = ({...})[1] and {...} or {obj.pos, obj._time, obj._dt}; for _, func in pairs(obj._subscribed) do func(table.unpack(args)) end end
+
 	--subscribe stuff initially and add callback
 	obj.subscribe_callback = function(func) func(obj.pos, obj._time, obj._dt) end
 	if args.subscribed ~= nil then obj:subscribe(args.subscribed) end
