@@ -13,7 +13,8 @@ Basically like [awestore](https://github.com/K4rakara/awestore) but not really.
 
 Join the cool curve crew
 
-<img src="https://cdn.discordapp.com/attachments/702548961780826212/879022533314216007/download.jpeg" height=160>
+<!-- look colleges might see this and think its distasteful so I'm commenting it out for the moment
+<img src="https://cdn.discordapp.com/attachments/702548961780826212/879022533314216007/download.jpeg" height=160>-->
 
 <h1 id="background">Background and Explanation</h1>
 
