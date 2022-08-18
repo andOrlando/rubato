@@ -291,7 +291,8 @@ local function timed(args)
 	end
 
 	--override to allow calling fire with no arguments
-	function obj:fire(...) args = ({...})[1] and {...} or {obj.pos, obj._time, obj._dt}; for _, func in pairs(obj._subscribed) do func((table.unpack or unpack)(args)) end end
+	local unpack = unpack or table.unpack
+	function obj:fire(...) args = ({...})[1] and {...} or {obj.pos, obj._time, obj._dt}; for _, func in pairs(obj._subscribed) do func(unpack(args)) end end
 
 	--subscribe stuff initially and add callback
 	obj.subscribe_callback = function(func) func(obj.pos, obj._time, obj._dt) end
