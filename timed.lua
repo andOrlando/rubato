@@ -92,7 +92,7 @@ local function create_timeout(rate)
 
 	for _, obj in pairs(RUBATO_MANAGER.timeds) do
 
-		if obj.rate == rate and obj._props.target ~= obj.pos and not obj.pause then
+		if obj.rate == rate and obj._time ~= obj.duration and not obj.pause then
 
 			--increment time
 			obj._time = obj._time + dt
