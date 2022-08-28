@@ -1,3 +1,6 @@
+if not RUBATO_DIR then RUBATO_DIR = (...):match("(.-)[^%.]+$") end
+if not RUBATO_MANAGER then RUBATO_MANAGER = require(RUBATO_DIR.."manager") end
+
 local subscribable = require(RUBATO_DIR.."subscribable")
 local glib = require("lgi").GLib
 
@@ -86,7 +89,6 @@ local function create_timeout(rate)
 	local initial_dt = 1 / rate
 	return glib.timeout_add(glib.PRIORITY_DEFAULT, initial_dt * 1000, function()
 
-	--correct for it being too slow if need be
 	local dt = (glib.get_monotonic_time() - time_last) / 1000000
 	if dt < initial_dt * 1.05 then dt = initial_dt end --give it 5% moe
 
