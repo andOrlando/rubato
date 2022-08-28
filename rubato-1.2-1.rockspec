@@ -16,9 +16,10 @@ dependencies = {}
 build = {
    type = "builtin",
    modules = {
-      easing = "easing.lua",
-      timed = "timed.lua",
-	  subscribable = "subscribable.lua",
-	  manager = "manager.lua"
+      ["rubato.init"] = "init.lua",
+      ["rubato.easing"] = "easing.lua",
+      ["rubato.timed"] = "timed.lua",
+      ["rubato.subscribable"] = "subscribable.lua",
+      ["rubato.manager"] = "manager.lua"
    }
 }
