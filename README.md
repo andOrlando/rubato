@@ -60,7 +60,7 @@ execute, and then run it by updating `target`! In practice it'd look like this:
 timed = rubato.timed {
     duration = 1/2, --half a second
     intro = 1/6, --one third of duration
-	override_dt = true, --better accuracy for testing
+    override_dt = true, --better accuracy for testing
     subscribed = function(pos) print(pos) end
 }
 
@@ -91,9 +91,10 @@ timed.target = 1
 -- it calls that function at the current position, which is 0
 -- Last zero is because it'll snap to the exact position in 
 -- case of minor error which can come about from floating point
--- math
+-- math or correcting for frameskips
 
---and this'll send it back from 1 to 0, printing out another 15 #s
+--When called after it finishes printing, this would print out
+--the same numbers but in reverse, sending it back from 1 to 0
 timed.target = 0
 ```
 
