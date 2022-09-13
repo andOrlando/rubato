@@ -58,8 +58,9 @@ execute, and then run it by updating `target`! In practice it'd look like this:
 
 ```lua
 timed = rubato.timed {
-    intro = 0.1,
-    duration = 0.5,
+    duration = 1/2, --half a second
+    intro = 1/6, --one third of duration
+	override_dt = true, --better accuracy for testing
     subscribed = function(pos) print(pos) end
 }
 
@@ -68,9 +69,29 @@ timed = rubato.timed {
 
 --target is initially 0 (unless you set pos otherwise)
 timed.target = 1
---here it would print out a bunch of values (15 by default) which
---I would normally copy and paste here but my stdout is broken
---on awesome rn so just pretend there are a bunch of floats here
+-- Here it prints out this:
+-- 0
+-- 0
+-- 0.02
+-- 0.06
+-- 0.12
+-- 0.2
+-- 0.3
+-- 0.4
+-- 0.5
+-- 0.6
+-- 0.7
+-- 0.8
+-- 0.88
+-- 0.94
+-- 0.98
+-- 1
+-- 1
+-- First 0 is because when you initially subscribe a function
+-- it calls that function at the current position, which is 0
+-- Last zero is because it'll snap to the exact position in 
+-- case of minor error which can come about from floating point
+-- math
 
 --and this'll send it back from 1 to 0, printing out another 15 #s
 timed.target = 0
@@ -134,15 +155,14 @@ Arguments (in the form of a table):
  - `subscribed`: a function to subscribe at initialization (def. `nil`)
  - `override_simulate`: when `true`, will simulate everything instead of just when `dx` and `b` have opposite signs at the cost of having to do a little more work (and making my hard work on finding the formula for `m` worthless :slightly_frowning_face:) (def. `false`)
  - `rapid_set`: 
- - `override_dt`: will cap rate to the fastest that awesome can possibly handle. This may result in frame-skipping. By setting it to false, it may make animations slower (def. `true`)
+ - `override_dt`: overrides the difference in time it takes to redraw the screen and just uses 1/rate no matter what. This results in slightly more accurate animations but they may take longer if awesome takes too long to redraw the screen. (def. `false`)
  - `awestore_compat`: make api even *more* similar to awestore's (def. `false`)
  - `log`: it would print additional logs, but there aren't any logs to print right now so it kinda just sits there (def. `false`)
- - `debug`: basically just tags the timed instance. I use it in tandem with manager.timed.override.forall
+ - `debug`: basically just tags the timed instance. I use it in tandem with `manager.timed.override.forall`
 
 All of these values (except awestore_compat and subscribed) are mutable and changing them will change how the animation looks. I do not suggest changing `pos`, however, unless you change the position of what's going to be animated in some other way
 
-\*with the caviat that if the outro being the same as the intro would result in an error, it would go
-for the largest allowable outro time. Ex: duration = 1, intro = 0.6, then outro will default to 0.4.
+\*unless `outro + intro > 1`, it will instead go for the largest allowable outro time. Ex: duration = 1, intro = 0.6, then outro will default to 0.4.
 
 Properties:
  - `target`: when set, sets the target and starts the animation, otherwise returns the target
@@ -152,7 +172,7 @@ Properties:
 Methods are as follows:
  - `timed:subscribe(func)`: subscribe a function to be ran every refresh of the animation
  - `timed:unsubscribe(func)`: unsubscribe a function
- - `timed:fire()`: run all subscribed functions at current position (it doesn't provide arguments, which are typically position, current time and dx. You must provide those yourself if calling this)
+ - `timed:fire()`: run all subscribed functions at current position (you may provide it with arguments `pos`, `time` and `dx` manually if you wish, otherwise it'll use the values of the timed object) 
  - `timed:abort()`: stop the animation at the current position
 
 Awestore compatibility functions (`awestore_compat` must be true):
@@ -177,8 +197,8 @@ Awestore compatibility properties:
  - `easing.bouncy`: the bouncy thing as shown in the example
 
 **functions for setting default values**
- - (DEPRECIATED) `rubato.set_def_rate(rate)`: set default rate for all interpolators, takes an `int`
- - (DEPRECIATED) `rubato.set_override_dt(value))`: set default for override_dt for all interpolators, takes a `bool`
+ - (DEPRECIATED) `rubato.set_def_rate(rate)`: set default rate for all interpolators, takes an `int`. Please use instead `manager.timed.default.rate = rate`
+ - (DEPRECIATED) `rubato.set_override_dt(value))`: set default for override_dt for all interpolators, takes a `bool`. Please use instead `manager.timed.default.override_dt = value`
 
  **For rubato.manager**
 
@@ -195,14 +215,12 @@ To make a custom easing function, it's pretty easy. You just need a table with t
    you'd take the derivative, which would result in linear easing. **Important:** `f(0)=0` and
    `f(1)=1` must be true for it to look nice.
  - `F`, which is basically just the value of the antiderivative of the easing function at `x=1`.
-   This is the antiderivative of the scaled function (such that (0, 0) and (1, 1) are in the
-   function), however, so be wary of that.
+   This is the antiderivative of the scaled function (``(0,0) ⋃ (1,1) ∈ f``), however, so be wary of that.
 
 In practice, creating your own easing would look like this:
 
 1. Go to [easings.net](https://easings.net)
 
-For the sake of this tutorial, we'll do an extremely complex (hellish? easing, "ease in elastic"
 For the sake of this tutorial, we'll do both an easy easing and a complex one. The easy easing will
 be the beautifully simple and quite frankly obvious quadratic. The much worse easing will be "ease
 in elastic."
@@ -234,24 +252,26 @@ The derivative (via sagemath) is as follows:
 
 <img src="https://render.githubusercontent.com/render/math?math=\color{blue}f^\prime (x)=-\frac{20}{3} \, \pi 2^{10 \, x - 10} \cos\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right) - 10 \cdot 2^{10 \, x - 10} \log\left(2\right) \sin\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right)">
 
-4. Double check that `f'(0)=0`
+4. Ensure that `(0,0) ∈ f'`
 
 Quadratic: `2*0 = 0` so we're good
 
 Ease in elastic not so much, however:
 
 <img src="https://render.githubusercontent.com/render/math?math=\color{blue}f^\prime (0)=\frac{5}{1536} \, \sqrt{3} \pi - \frac{5}{1024} \, \log\left(2\right)">
-We'll subtract this value from `f(x)` so that our new `f(x)`, let's say `f_2(x)` has a point at 
-(0, 0).
 
-5. Double check that `f_2(1)=1`
+We'll subtract this value from `f(x)` so that our new `f(x)`, let's say `f_2(x)` is such that `(0,0) ∈ f_2`
 
-Quadratic: No, actually. This means we have to do a wee bit of work: `f(1)=2`, so to counteract this,
+5. Ensure that `(1,1) ∈ f_2`
+
+Quadratic:  This means we have to do a wee bit of work: `f(1)=2`, so to counteract this,
 we'll create a new (and final) function that we can call `f_e` (easing function) by dividing `f(x)`
-by `f(1)`. In practice this looks like this:
+by `f(1)` (scaling it down).
 
 ```
-f(1)=2, f(x)/f(1) = 2x / 2 = x, f_e(x)=x
+f(1)=2
+f(x)/f(1) = 2x / 2 = x,
+f_e(x)=x
 ```
 
 Easy as that!
@@ -264,13 +284,13 @@ Hence the need for sagemath. Once we divide the two we get our final easing func
 
 <img src="https://render.githubusercontent.com/render/math?math=\color{blue}f_e(x)=\frac{4096 \, \pi 2^{10 \, x - 10} \cos\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right) %2B 6144 \cdot 2^{10 \, x - 10} \log\left(2\right) \sin\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right) %2B 2 \, \sqrt{3} \pi - 3 \, \log\left(2\right)}{2 \, \sqrt{3} \pi - 6147 \, \log\left(2\right)}">
 
-What on god's green earth is that. Well whatever, at least it works (?).
+What on god's green earth is that. Well whatever, at least it works.
 
 6. Finally, we get the definite integral from 0 to 1 of our `f(x)`
 
 For `f(x)=x` we can do that in our heads, it's just `1/2`.
 
-For ease in elastic not so much. You can do this with sagemath and eventually get this:
+Ease in elastic is a bit trickier to do in your head. You can do this with sagemath and eventually get this:
 
 <img src="https://render.githubusercontent.com/render/math?math=\color{blue}\frac{20 \, \sqrt{3} \pi - 30 \, \log\left(2\right) - 6147}{10 \, {\left(2 \, \sqrt{3} \pi - 6147 \, \log\left(2\right)\right)}}">
 
@@ -296,13 +316,13 @@ bunch of 0.49999s which wouldn't round to .5, the result was straight up wrong. 
 it, and if you can't do the derivative then sucks to suck I guess (just lmk in an issue or
 something and I'll try my very best).
 
-4. Now we just have to translate this into an actual lua table. 
+7. Now we just have to translate this into an actual lua table. 
 
 Quadratic, as usual, is easy.
 ```lua
 local quadratic = {
-	F = 1/2 -- F = 1/2
-	easing = function(t) return t end -- f(x) = x
+	F = 1/2 -- F(1) = 1/2
+	easing = function(t) return t end -- f(x) = x, I just use t for "time"
 }
 ```
 
@@ -390,3 +410,5 @@ about in the first place. Plus, it'll be the first of my projects without garbag
  - [x] Merge that pr by @Kasper so instant works
  - [x] Add a manager (this proceeds the above todo thing)
  - [ ] Make forall more useable and add tags and stuff
+ - [ ] Fix that bug where you could set stuff manually (this might already be fixed I just haven't tested it)
+ - [ ] Make is_instant even faster by just short circuiting `set`
