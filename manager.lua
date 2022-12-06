@@ -32,6 +32,7 @@ local function manager()
 		log = function() end,
 		override_simulate = false,
 		override_dt = false,
+		clamp_position = false,
 		rate = 60,
 	}
 	make_props_immutable(obj.timed)

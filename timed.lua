@@ -77,6 +77,21 @@ local function simulate_easing(pos, duration, intro, intro_e, outro, outro_e, m,
 	return ps_pos
 end
 
+--- Preprocess position
+-- do any preprocessing of position necessary
+-- currently just handles clamp_position but should be flexible
+local function preprocess_pos(obj)
+	local pos = obj.pos
+	if (obj.clamp_position) then
+		print("---")
+		print(obj._m)
+		print(pos)
+		pos = (obj._m < 0 and math.max or math.min)(obj.pos, obj.target)
+		print(pos)
+	end
+	return pos
+end
+
 --RUBATO_TIMEOUTS contains multiple timeouts for different rates
 --function creates timers which run in the background handling animations at distinct rates
 --this allows for rates to change dynamiclally during runtime should you wanna set everything's
@@ -126,13 +141,13 @@ local function create_timeout(rate, override_dt)
 
 				--run subscribed in functions
 				--snap time to duration at end
-				obj:fire(obj.pos, obj.duration, obj._dx)
+				obj:fire(preprocess_pos(obj), obj.duration, obj._dx)
 
 				-- awestore compatibility
 				if obj.awestore_compat then obj.ended:fire(obj.pos, obj.duration, obj._dx) end
 
 			--otherwise it just fires normally
-			else obj:fire(obj.pos, obj._time, obj._dx) end
+			else obj:fire(preprocess_pos(obj), obj._time, obj._dx) end
 
 		end
 	end
@@ -182,6 +197,7 @@ local function timed(args)
 		--animation logic changes
 		self.override_simulate = args.override_simulate or RUBATO_MANAGER.timed.defaults.override_simulate
 		self.rapid_set = args.rapid_set == nil and self.awestore_compat or args.rapid_set
+		self.clamp_position = args.clamp_position or RUBATO_MANAGER.timed.defaults.clamp_position
 		self.is_instant = args.is_instant
 
 		-- hidden properties
@@ -224,7 +240,7 @@ local function timed(args)
 	local function set(value)
 
 		--if it's instant just do it lol, no need to go through all this
-		if obj.is_instant then obj:fire(value, obj.duration, obj.pos - value); return end
+		if obj.is_instant then obj:fire(preproceesvalue, obj.duration, obj.pos - value); return end
 
 		--disallow setting it twice (because it makes it go wonky sometimes)
 		if not obj.rapid_set and obj._props.target == value then return end
@@ -277,7 +293,7 @@ local function timed(args)
 		--set target, triggering timeout since pos != target
 		obj._props.target = value --sets target
 
-		--finally, fire it once with initial values 
+		--finally, fire it once with initial values
 		obj:fire(obj.pos, obj._time, obj._dx)
 
 	end
@@ -336,7 +352,7 @@ local function timed(args)
 		-- Changing override_dt should also update dt_state
 		elseif  key == "override_dt" then
 			self._props.override_dt = value
-			self._dt_index = self._props.override_dt and 2 or 1 
+			self._dt_index = self._props.override_dt and 2 or 1
 		-- If it's in _props set it there
 		elseif self._props[key] ~= nil then self._props[key] = value
 

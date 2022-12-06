@@ -44,7 +44,7 @@ where `m` is the height of the plateau, `i` is intro duration, `F_i` is the anti
 
 We then simulate the antiderivative by adding `v(t)` (or the y-value at time `t` on the slope graph) to the current position 30 times per second (by default, but I recommend 60). There is some inaccuracy since it’s not a perfect antiderivative and there’s some weirdness when going from positive slopes to negative slopes that I don’t know how to intelligently fix (I have to simulate the antiderivative beforehand and multiply everything by a coefficient to prevent weird errors), but overall it results in good looking interruptions and I get a dopamine hit whenever I see it in action.
 
-There are two main small issues that I can’t/don’t know how to fix mathematically:
+There are a couple small issues that I can’t/don’t know how to fix mathematically:
 - It’s not perfectly accurate (it is perfectly accurate as `dt` goes to zero) which I don’t think is possible to fix unless I stop simulating the antiderivative and actually calc out the function, which seems time inefficient
 - When going from a positive m to a negative m, or in other words going backwards after going forwards in the animation, it will always undershoot by some value. I don’t know what that value is, I don’t know where it comes from, I don’t know how to fix it except for lots and lots of time-consuming testing, but it’s there. To compensate for this, whenever there’s a situation in which this will happen, I simulate the animation beforehand and multiply the entire animation by a corrective coefficient to make it do what I want
 - Awesome is kinda slow at redrawing imaages, so 60 redraws per second is realistically probably not going to happen. If you were to, for example, set the redraws per second to 500 or some arbitrarily large value, if I did nothing to dt, it would take forever to complete an animaiton. So since I can't fix awesome, I just (by default but this is optional) limit the rate based on the time it takes for awesome to render the first frame of the animation (Thanks Kasper for pointing this out and showing me a solution).
@@ -157,6 +157,7 @@ Arguments (in the form of a table):
  - `override_simulate`: when `true`, will simulate everything instead of just when `dx` and `b` have opposite signs at the cost of having to do a little more work (and making my hard work on finding the formula for `m` worthless :slightly_frowning_face:) (def. `false`)
  - `rapid_set`: 
  - `override_dt`: overrides the difference in time it takes to redraw the screen and just uses 1/rate no matter what. This results in slightly more accurate animations but they may take longer if awesome takes too long to redraw the screen. (def. `false`)
+ - `clamp_position`: ensures the position does not exceed the target, essentially preventing overshooting (def. `false`)
  - `awestore_compat`: make api even *more* similar to awestore's (def. `false`)
  - `log`: it would print additional logs, but there aren't any logs to print right now so it kinda just sits there (def. `false`)
  - `debug`: basically just tags the timed instance. I use it in tandem with `manager.timed.override.forall`
@@ -216,7 +217,7 @@ To make a custom easing function, it's pretty easy. You just need a table with t
    you'd take the derivative, which would result in linear easing. **Important:** `f(0)=0` and
    `f(1)=1` must be true for it to look nice.
  - `F`, which is basically just the value of the antiderivative of the easing function at `x=1`.
-   This is the antiderivative of the scaled function (``(0,0) ⋃ (1,1) ∈ f``), however, so be wary of that.
+   This is the antiderivative of the scaled function such that ``(0,0) ⋃ (1,1) ∈ f``.
 
 In practice, creating your own easing would look like this:
 
