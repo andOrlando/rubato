@@ -82,13 +82,7 @@ end
 -- currently just handles clamp_position but should be flexible
 local function preprocess_pos(obj)
 	local pos = obj.pos
-	if (obj.clamp_position) then
-		print("---")
-		print(obj._m)
-		print(pos)
-		pos = (obj._m < 0 and math.max or math.min)(obj.pos, obj.target)
-		print(pos)
-	end
+	if (obj.clamp_position) then pos = (obj._m < 0 and math.max or math.min)(obj.pos, obj.target) end
 	return pos
 end
 
