@@ -5,7 +5,7 @@
 - [But why though?](#why)
 - [Arguments and Methods](#arguments-methods)
 - [Custom Easing Functions](#easing)
-- [Installation](#install)
+- [Installation](#installation)
 - [Why the name?](#name)
 - [Todo](#todo)
 
