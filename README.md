@@ -38,7 +38,7 @@ These are what they would look like with forwards-and-back animations. A forward
 
 To ask one of you to give these graphs as inputs, however, would be really dumb. So instead we define an intro function and its duration, which in the figure above is the `y=x` portion, an outro function and its duration, which is the `y=-x` portion, and the rest is filled with constant velocity. The area under the curve for this must be equal to the position for this to end up at the correct position (antiderivative of velocity is position). If we know the area under the curve for the intro and outro functions, the only component we need to ensure that the antiderivative is equal to the position would be the height of the graph. We find that with this formula:
 
-<img src="https://render.githubusercontent.com/render/math?math=\color{blue}m=\frac{d %2B ib(F_i(1)-1)}{i(F_i(1)-1) %2B o(F_o(1)-1) %2B t}" height=50>
+$$m=\frac{d + ib(F_i(1)-1)}{i(F_i(1)-1) + o(F_o(1)-1) + t}$$
 
 where `m` is the height of the plateau, `i` is intro duration, `F_i` is the antiderivative of the intro easing function, `o` is outro duration, `F_o` is the antiderivative of the outro easing function, `d` is the total distance needed to be traveled, `b` is the initial slope, and `t` is the total duration.
 
@@ -233,7 +233,7 @@ For quadratic we already know the function: `y=x^2`. I don't even need to use la
 
 For ease in elastic, we use the function given [here](https://easings.net/#easeInElastic): 
 
-<img src="https://render.githubusercontent.com/render/math?math=\color{blue}f(x)=-2^{10 \, x - 10}\times \sin\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right))">
+$$f(x)=-2^{10x - 10}\times \sin\left(-\frac{43}{6} \pi + \frac{20}{3} \pi x\right)$$
 
 3. Take the derivative 
 
@@ -252,7 +252,7 @@ it look *presentable* in tui sagemath.
 
 The derivative (via sagemath) is as follows:  
 
-<img src="https://render.githubusercontent.com/render/math?math=\color{blue}f^\prime (x)=-\frac{20}{3} \, \pi 2^{10 \, x - 10} \cos\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right) - 10 \cdot 2^{10 \, x - 10} \log\left(2\right) \sin\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right)">
+$$f^\prime (x)=-\frac{20}{3} \pi 2^{10 x - 10} \cos\left(-\frac{43}{6} \pi + \frac{20}{3} \pi x\right) - 10 \cdot 2^{10 x - 10} \log\left(2\right) \sin\left(-\frac{43}{6} \pi + \frac{20}{3} \pi x\right)$$
 
 4. Ensure that `(0,0) ∈ f'`
 
@@ -260,7 +260,7 @@ Quadratic: `2*0 = 0` so we're good
 
 Ease in elastic not so much, however:
 
-<img src="https://render.githubusercontent.com/render/math?math=\color{blue}f^\prime (0)=\frac{5}{1536} \, \sqrt{3} \pi - \frac{5}{1024} \, \log\left(2\right)">
+$$f^\prime (0)=\frac{5}{1536} \sqrt{3} \pi - \frac{5}{1024} \log\left(2\right)$$
 
 We'll subtract this value from `f(x)` so that our new `f(x)`, let's say `f_2(x)` is such that `(0,0) ∈ f_2`
 
@@ -280,11 +280,11 @@ Easy as that!
 
 Or so you thought. Now let's check the same for ease in elastic:
 
-<img src="https://render.githubusercontent.com/render/math?math=\color{blue}f_2(1)=-\frac{5}{1536} \, \sqrt{3} \pi %2B \frac{10245}{1024} \, \log\left(2\right)">
+$$f_2(1)=-\frac{5}{1536} \sqrt{3} \pi + \frac{10245}{1024} \log\left(2\right)$$
 
 Hence the need for sagemath. Once we divide the two we get our final easing function, this:
 
-<img src="https://render.githubusercontent.com/render/math?math=\color{blue}f_e(x)=\frac{4096 \, \pi 2^{10 \, x - 10} \cos\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right) %2B 6144 \cdot 2^{10 \, x - 10} \log\left(2\right) \sin\left(-\frac{43}{6} \, \pi %2B \frac{20}{3} \, \pi x\right) %2B 2 \, \sqrt{3} \pi - 3 \, \log\left(2\right)}{2 \, \sqrt{3} \pi - 6147 \, \log\left(2\right)}">
+$$f_e(x)=\frac{4096 \pi 2^{10 x - 10} \cos\left(-\frac{43}{6} \pi + \frac{20}{3} \pi x\right) + 6144 \cdot 2^{10 x - 10} \log\left(2\right) \sin\left(-\frac{43}{6} \pi + \frac{20}{3} \pi x\right) + 2 \sqrt{3} \pi - 3 \log\left(2\right)}{2 \sqrt{3} \pi - 6147 \log\left(2\right)}$$
 
 What on god's green earth is that. Well whatever, at least it works.
 
@@ -294,7 +294,7 @@ For `f(x)=x` we can do that in our heads, it's just `1/2`.
 
 Ease in elastic is a bit trickier to do in your head. You can do this with sagemath and eventually get this:
 
-<img src="https://render.githubusercontent.com/render/math?math=\color{blue}\frac{20 \, \sqrt{3} \pi - 30 \, \log\left(2\right) - 6147}{10 \, {\left(2 \, \sqrt{3} \pi - 6147 \, \log\left(2\right)\right)}}">
+$$\frac{20 \sqrt{3} \pi - 30 \log\left(2\right) - 6147}{10 {\left(2 \sqrt{3} \pi - 6147 \log\left(2\right)\right)}}$$
 
 So this all looked pretty daunting probably, and to be honest it took me hours of either not using
 sage (I tried with wolfram alpha for a good hour) or using sage incorrectly (it took three months
